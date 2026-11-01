@@ -1,0 +1,56 @@
+from pathlib import Path
+from datetime import datetime
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+REPORT_DIR = BASE_DIR / "reports"
+REPORT_DIR.mkdir(exist_ok=True)
+
+report_path = REPORT_DIR / "fraudguard_eda_report.txt"
+
+report = f"""
+========================================
+       FRAUDGUARD AI - EDA REPORT
+========================================
+
+Report Generated: {datetime.now()}
+
+DATASET 1: CREDIT CARD FRAUD
+----------------------------
+Total Transactions: 100000
+Normal Transactions: 99000
+Fraud Transactions: 1000
+Fraud Percentage: 1%
+Missing Values: 0
+Duplicate Rows: 0
+
+DATASET 2: FRAUD DETECTION
+--------------------------
+Total Transactions: 5000
+Normal Transactions: 4518
+Fraud Transactions: 482
+Fraud Percentage: 9.64%
+Missing Values: 0
+Duplicate Rows: 0
+
+IMPORTANT FINDING
+-----------------
+International transactions: 441
+Fraudulent international transactions: 163
+International fraud rate: 36.96%
+
+CONCLUSION
+----------
+Both datasets have been inspected and preprocessed.
+Fraud labels are imbalanced in both datasets.
+Further feature engineering and model evaluation
+are required.
+
+========================================
+             END OF REPORT
+========================================
+"""
+
+report_path.write_text(report, encoding="utf-8")
+
+print("EDA Report generated successfully!")
+print("Report saved at:", report_path)

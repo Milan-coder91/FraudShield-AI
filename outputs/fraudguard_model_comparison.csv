@@ -1,0 +1,3 @@
+Dataset,Model,Threshold,Accuracy,Precision,Recall,F1 Score
+Credit Card Fraud,Pipeline Random Forest,0.0033333333333333335,0.3199,0.010089194326655945,0.69,0.01988759187202767
+Fraud Detection,Pipeline Random Forest,0.14333333333333334,0.836,0.33,0.6875,0.44594594594594594
