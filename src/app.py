@@ -3,13 +3,12 @@ import streamlit as st
 import pandas as pd
 import joblib
 import plotly.express as px
-import plotly.graph_objects as go
 
 from pathlib import Path
-from datetime import date, datetime
+from datetime import date
 
 # =====================================================
-# PATHS
+# PROJECT PATHS
 # =====================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,7 +17,7 @@ RAW_DIR = BASE_DIR / "data" / "raw"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 
 # =====================================================
-# PAGE CONFIG
+# PAGE CONFIGURATION
 # =====================================================
 
 st.set_page_config(
@@ -29,7 +28,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# CUSTOM CSS
+# CUSTOM DESIGN
 # =====================================================
 
 st.markdown("""
@@ -38,28 +37,35 @@ st.markdown("""
     background-color: #0b1120;
     color: #f8fafc;
 }
+
 [data-testid="stSidebar"] {
     background-color: #111827;
     border-right: 1px solid #263449;
 }
+
 [data-testid="stSidebar"] * {
     color: #e5e7eb;
 }
+
 h1, h2, h3 {
     color: #f8fafc;
 }
+
 div[data-testid="stMetric"] {
     background: linear-gradient(135deg, #172554, #1e293b);
     border: 1px solid #334155;
     padding: 18px;
     border-radius: 12px;
 }
+
 div[data-testid="stMetric"] label {
     color: #93c5fd;
 }
+
 div[data-testid="stMetricValue"] {
     color: #ffffff;
 }
+
 .hero {
     background: linear-gradient(110deg, #123b91, #1766d1);
     padding: 35px;
@@ -67,21 +73,17 @@ div[data-testid="stMetricValue"] {
     margin-bottom: 22px;
     color: white;
 }
+
 .hero h1 {
     color: white;
     font-size: 38px;
 }
+
 .hero p {
     color: #dbeafe;
     font-size: 16px;
 }
-.section-card {
-    background: #172033;
-    padding: 20px;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    margin-bottom: 15px;
-}
+
 div.stButton > button {
     background: #2563eb;
     color: white;
@@ -89,6 +91,7 @@ div.stButton > button {
     border-radius: 8px;
     padding: 10px 22px;
 }
+
 div.stButton > button:hover {
     background: #1d4ed8;
     color: white;
@@ -98,7 +101,7 @@ div.stButton > button:hover {
 
 
 # =====================================================
-# DATA LOADING
+# LOAD DATASETS
 # =====================================================
 
 @st.cache_data
@@ -154,7 +157,7 @@ def get_fraud_stats(df):
     fraud_col = find_fraud_column(df)
 
     if fraud_col is None:
-        return 0, 0, 0
+        return 0, 0, None
 
     values = df[fraud_col]
 
@@ -179,12 +182,10 @@ def get_fraud_stats(df):
 
 
 def get_numeric_columns(df):
-
     return df.select_dtypes(include="number").columns.tolist()
 
 
 def get_categorical_columns(df):
-
     return df.select_dtypes(
         include=["object", "category"]
     ).columns.tolist()
@@ -193,20 +194,20 @@ def get_categorical_columns(df):
 def show_dataset_selector():
 
     if not datasets:
-        st.warning("No CSV datasets found in data/raw or data/processed.")
+        st.warning(
+            "No CSV datasets found in data/raw or data/processed."
+        )
         return None
 
-    selected = st.selectbox(
+    return st.selectbox(
         "Select Dataset",
         list(datasets.keys())
     )
 
-    return selected
-
 
 def show_dataset_kpis(df):
 
-    fraud, normal, fraud_col = get_fraud_stats(df)
+    fraud, normal, _ = get_fraud_stats(df)
 
     c1, c2, c3, c4 = st.columns(4)
 
@@ -218,40 +219,37 @@ def show_dataset_kpis(df):
 
 def show_fraud_chart(df):
 
-    fraud_col = find_fraud_column(df)
+    fraud, normal, fraud_col = get_fraud_stats(df)
 
-    if fraud_col:
+    if fraud_col is None:
+        st.info("Fraud label column not found.")
+        return
 
-        fraud, normal, _ = get_fraud_stats(df)
+    chart_df = pd.DataFrame({
+        "Transaction Type": ["Fraud", "Normal"],
+        "Count": [fraud, normal]
+    })
 
-        chart_df = pd.DataFrame({
-            "Transaction Type": ["Fraud", "Normal"],
-            "Count": [fraud, normal]
-        })
+    fig = px.pie(
+        chart_df,
+        names="Transaction Type",
+        values="Count",
+        hole=0.55,
+        title="Fraud vs Normal Distribution",
+        color="Transaction Type",
+        color_discrete_map={
+            "Fraud": "#ef4444",
+            "Normal": "#2563eb"
+        }
+    )
 
-        fig = px.pie(
-            chart_df,
-            names="Transaction Type",
-            values="Count",
-            hole=0.55,
-            title="Fraud vs Normal Distribution",
-            color="Transaction Type",
-            color_discrete_map={
-                "Fraud": "#ef4444",
-                "Normal": "#2563eb"
-            }
-        )
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#0b1120",
+        plot_bgcolor="#0b1120"
+    )
 
-        fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0b1120",
-            plot_bgcolor="#0b1120"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-    else:
-        st.info("Fraud label column not found in this dataset.")
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def show_numeric_chart(df):
@@ -310,31 +308,33 @@ def show_correlation(df):
 
 
 # =====================================================
-# SIDEBAR NAVIGATION
+# SIDEBAR NAVIGATION WITH ICONS
 # =====================================================
 
 st.sidebar.markdown("## 🛡️ FraudShield AI")
 st.sidebar.caption("Enterprise Fraud Detection Platform")
 
-pages = [
-    "Executive Dashboard",
-    "Dataset Overview",
-    "EDA Dashboard",
-    "Feature Engineering",
-    "Fraud Intelligence",
-    "Model Comparison",
-    "Fraud Prediction",
-    "Fraud Analytics",
-    "Explainable AI",
-    "Real-Time Monitoring",
-    "Fraud Forecasting",
-    "Graph Analytics"
-]
+pages = {
+    "📊 Executive Dashboard": "Executive Dashboard",
+    "📁 Dataset Overview": "Dataset Overview",
+    "📈 EDA Dashboard": "EDA Dashboard",
+    "⚙️ Feature Engineering": "Feature Engineering",
+    "🚨 Fraud Intelligence": "Fraud Intelligence",
+    "🤖 Model Comparison": "Model Comparison",
+    "🔍 Fraud Prediction": "Fraud Prediction",
+    "📉 Fraud Analytics": "Fraud Analytics",
+    "🧠 Explainable AI": "Explainable AI",
+    "📡 Real-Time Monitoring": "Real-Time Monitoring",
+    "🔮 Fraud Forecasting": "Fraud Forecasting",
+    "🕸️ Graph Analytics": "Graph Analytics"
+}
 
-page = st.sidebar.radio(
+selected_page = st.sidebar.radio(
     "Navigation",
-    pages
+    list(pages.keys())
 )
+
+page = pages[selected_page]
 
 st.sidebar.divider()
 st.sidebar.markdown("### 🛡️ System Status")
@@ -343,7 +343,7 @@ st.sidebar.caption("Machine Learning Fraud Detection")
 
 
 # =====================================================
-# EXECUTIVE DASHBOARD
+# 1. EXECUTIVE DASHBOARD
 # =====================================================
 
 if page == "Executive Dashboard":
@@ -359,13 +359,9 @@ if page == "Executive Dashboard":
 
     st.header("📊 Executive Overview")
 
-    if datasets:
+    selected = show_dataset_selector()
 
-        selected = st.selectbox(
-            "Choose Dataset for Overview",
-            list(datasets.keys()),
-            key="executive_dataset"
-        )
+    if selected:
 
         df = datasets[selected]
 
@@ -395,14 +391,18 @@ if page == "Executive Dashboard":
         """)
 
         st.subheader("📋 Dataset Preview")
-        st.dataframe(df.head(10), use_container_width=True)
+
+        st.dataframe(
+            df.head(10),
+            use_container_width=True
+        )
 
     else:
         st.warning("Please add CSV files to the project data folders.")
 
 
 # =====================================================
-# DATASET OVERVIEW
+# 2. DATASET OVERVIEW
 # =====================================================
 
 elif page == "Dataset Overview":
@@ -421,7 +421,11 @@ elif page == "Dataset Overview":
         st.divider()
 
         st.subheader("Dataset Preview")
-        st.dataframe(df.head(20), use_container_width=True)
+
+        st.dataframe(
+            df.head(20),
+            use_container_width=True
+        )
 
         st.subheader("Dataset Information")
 
@@ -438,18 +442,32 @@ elif page == "Dataset Overview":
 
         c1, c2, c3 = st.columns(3)
 
-        c1.metric("Missing Values", int(df.isnull().sum().sum()))
-        c2.metric("Duplicate Rows", int(df.duplicated().sum()))
-        c3.metric("Memory (MB)", round(df.memory_usage(deep=True).sum() / 1024**2, 2))
+        c1.metric(
+            "Missing Values",
+            int(df.isnull().sum().sum())
+        )
+
+        c2.metric(
+            "Duplicate Rows",
+            int(df.duplicated().sum())
+        )
+
+        c3.metric(
+            "Memory (MB)",
+            round(
+                df.memory_usage(deep=True).sum() / 1024**2,
+                2
+            )
+        )
 
 
 # =====================================================
-# EDA DASHBOARD
+# 3. EDA DASHBOARD
 # =====================================================
 
 elif page == "EDA Dashboard":
 
-    st.title("📊 Exploratory Data Analysis")
+    st.title("📈 Exploratory Data Analysis")
     st.caption("Fraud pattern discovery and behavioral analytics.")
 
     selected = show_dataset_selector()
@@ -482,12 +500,20 @@ elif page == "EDA Dashboard":
                 cat_cols
             )
 
-            top_values = df[category].astype(str).value_counts().head(15)
+            top_values = (
+                df[category]
+                .astype(str)
+                .value_counts()
+                .head(15)
+            )
 
             fig = px.bar(
                 x=top_values.index,
                 y=top_values.values,
-                labels={"x": category, "y": "Count"},
+                labels={
+                    "x": category,
+                    "y": "Count"
+                },
                 title=f"{category} Distribution"
             )
 
@@ -496,20 +522,23 @@ elif page == "EDA Dashboard":
                 paper_bgcolor="#0b1120"
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
         else:
             st.info("No categorical columns found.")
 
 
 # =====================================================
-# FEATURE ENGINEERING
+# 4. FEATURE ENGINEERING
 # =====================================================
 
 elif page == "Feature Engineering":
 
     st.title("⚙️ Feature Engineering Dashboard")
-    st.caption("Explore engineered and numerical variables.")
+    st.caption("Explore numerical and engineered variables.")
 
     selected = show_dataset_selector()
 
@@ -523,7 +552,7 @@ elif page == "Feature Engineering":
 
         if numeric_cols:
 
-            st.subheader("Engineered Feature Distribution")
+            st.subheader("Feature Distribution")
 
             feature = st.selectbox(
                 "Select Feature",
@@ -533,9 +562,20 @@ elif page == "Feature Engineering":
 
             col1, col2, col3 = st.columns(3)
 
-            col1.metric("Mean", round(df[feature].mean(), 3))
-            col2.metric("Median", round(df[feature].median(), 3))
-            col3.metric("Standard Deviation", round(df[feature].std(), 3))
+            col1.metric(
+                "Mean",
+                round(df[feature].mean(), 3)
+            )
+
+            col2.metric(
+                "Median",
+                round(df[feature].median(), 3)
+            )
+
+            col3.metric(
+                "Standard Deviation",
+                round(df[feature].std(), 3)
+            )
 
             fig = px.histogram(
                 df,
@@ -549,9 +589,13 @@ elif page == "Feature Engineering":
                 paper_bgcolor="#0b1120"
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
         st.subheader("Feature Information")
+
         st.dataframe(
             pd.DataFrame({
                 "Feature": df.columns,
@@ -563,7 +607,7 @@ elif page == "Feature Engineering":
 
 
 # =====================================================
-# FRAUD INTELLIGENCE
+# 5. FRAUD INTELLIGENCE
 # =====================================================
 
 elif page == "Fraud Intelligence":
@@ -584,7 +628,8 @@ elif page == "Fraud Intelligence":
         c1.metric("Fraud Cases", f"{fraud:,}")
         c2.metric("Normal Cases", f"{normal:,}")
 
-        rate = (fraud / len(df) * 100) if len(df) else 0
+        rate = fraud / len(df) * 100 if len(df) else 0
+
         c3.metric("Fraud Rate", f"{rate:.2f}%")
 
         st.divider()
@@ -594,7 +639,8 @@ elif page == "Fraud Intelligence":
             st.subheader("Fraud Records")
 
             fraud_values = pd.to_numeric(
-                df[fraud_col], errors="coerce"
+                df[fraud_col],
+                errors="coerce"
             )
 
             fraud_df = df[fraud_values == 1]
@@ -609,10 +655,8 @@ elif page == "Fraud Intelligence":
 
         st.subheader("High Value Transactions")
 
-        numeric_cols = get_numeric_columns(df)
-
         amount_cols = [
-            col for col in numeric_cols
+            col for col in get_numeric_columns(df)
             if "amount" in col.lower() or "value" in col.lower()
         ]
 
@@ -627,15 +671,19 @@ elif page == "Fraud Intelligence":
 
 
 # =====================================================
-# MODEL COMPARISON
+# 6. MODEL COMPARISON
 # =====================================================
 
 elif page == "Model Comparison":
 
     st.title("🤖 Model Comparison")
-    st.caption("Compare saved machine learning models.")
+    st.caption("Explore saved machine learning models.")
 
-    model_files = list(MODEL_DIR.glob("*.pkl")) if MODEL_DIR.exists() else []
+    model_files = (
+        list(MODEL_DIR.glob("*.pkl"))
+        if MODEL_DIR.exists()
+        else []
+    )
 
     if model_files:
 
@@ -644,24 +692,32 @@ elif page == "Model Comparison":
         for file in model_files:
 
             try:
+
                 saved = joblib.load(file)
 
                 rows.append({
                     "Model": file.stem,
-                    "Threshold": saved.get("threshold", "Not available"),
-                    "Features": len(saved.get("features", []))
+                    "Threshold": saved.get(
+                        "threshold",
+                        "Not available"
+                    ),
+                    "Features": len(
+                        saved.get("features", [])
+                    )
                 })
 
             except Exception:
+
                 rows.append({
                     "Model": file.stem,
                     "Threshold": "Unable to read",
                     "Features": "N/A"
                 })
 
-        model_df = pd.DataFrame(rows)
-
-        st.dataframe(model_df, use_container_width=True)
+        st.dataframe(
+            pd.DataFrame(rows),
+            use_container_width=True
+        )
 
         st.info(
             "This page displays saved model information. "
@@ -669,11 +725,11 @@ elif page == "Model Comparison":
         )
 
     else:
-        st.warning("No saved model files found in models folder.")
+        st.warning("No saved model files found.")
 
 
 # =====================================================
-# FRAUD PREDICTION
+# 7. FRAUD PREDICTION
 # =====================================================
 
 elif page == "Fraud Prediction":
@@ -690,14 +746,19 @@ elif page == "Fraud Prediction":
     )
 
     if dataset == "Credit Card Fraud Dataset":
+
         model_path = MODEL_DIR / "credit_card_fraud_model.pkl"
+
     else:
+
         model_path = MODEL_DIR / "fraud_detection_model.pkl"
 
     st.divider()
     st.header("Transaction Details")
 
     input_data = None
+
+    # DATASET 1
 
     if dataset == "Credit Card Fraud Dataset":
 
@@ -755,8 +816,12 @@ elif page == "Fraud Prediction":
                 "Transaction_Month": transaction_date.month,
                 "Transaction_Day": transaction_date.day,
                 "Transaction_Weekday": transaction_date.weekday(),
-                "Is_Weekend": int(transaction_date.weekday() >= 5)
+                "Is_Weekend": int(
+                    transaction_date.weekday() >= 5
+                )
             }
+
+    # DATASET 2
 
     else:
 
@@ -859,8 +924,12 @@ elif page == "Fraud Prediction":
                 "Transaction_Day": transaction_date.day,
                 "Transaction_Hour": 0,
                 "Transaction_Weekday": transaction_date.weekday(),
-                "Is_Weekend": int(transaction_date.weekday() >= 5)
+                "Is_Weekend": int(
+                    transaction_date.weekday() >= 5
+                )
             }
+
+    # MODEL PREDICTION
 
     if input_data is not None:
 
@@ -868,7 +937,9 @@ elif page == "Fraud Prediction":
 
             if not model_path.exists():
 
-                st.error("Model file not found. Please train the model first.")
+                st.error(
+                    "Model file not found. Please train the model first."
+                )
 
             else:
 
@@ -880,7 +951,9 @@ elif page == "Fraud Prediction":
 
                 input_df = pd.DataFrame([input_data])
 
-                input_df = input_df.reindex(columns=features)
+                input_df = input_df.reindex(
+                    columns=features
+                )
 
                 fraud_probability = model.predict_proba(
                     input_df
@@ -898,9 +971,13 @@ elif page == "Fraud Prediction":
                 with col1:
 
                     if prediction == 1:
-                        st.error("⚠️ FRAUD TRANSACTION DETECTED!")
+                        st.error(
+                            "⚠️ FRAUD TRANSACTION DETECTED!"
+                        )
                     else:
-                        st.success("✅ NORMAL TRANSACTION")
+                        st.success(
+                            "✅ NORMAL TRANSACTION"
+                        )
 
                 with col2:
 
@@ -915,7 +992,10 @@ elif page == "Fraud Prediction":
                 )
 
                 st.progress(
-                    min(max(float(fraud_probability), 0.0), 1.0)
+                    min(
+                        max(float(fraud_probability), 0.0),
+                        1.0
+                    )
                 )
 
                 st.caption(
@@ -930,12 +1010,12 @@ elif page == "Fraud Prediction":
 
 
 # =====================================================
-# FRAUD ANALYTICS
+# 8. FRAUD ANALYTICS
 # =====================================================
 
 elif page == "Fraud Analytics":
 
-    st.title("📈 Fraud Analytics")
+    st.title("📉 Fraud Analytics")
     st.caption("Transaction amount and fraud behavior analysis.")
 
     selected = show_dataset_selector()
@@ -944,9 +1024,9 @@ elif page == "Fraud Analytics":
 
         df = datasets[selected]
 
-        numeric_cols = get_numeric_columns(df)
-
         show_fraud_chart(df)
+
+        numeric_cols = get_numeric_columns(df)
 
         if numeric_cols:
 
@@ -966,14 +1046,21 @@ elif page == "Fraud Analytics":
                 paper_bgcolor="#0b1120"
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
         st.subheader("Statistical Summary")
-        st.dataframe(df.describe(include="all").T, use_container_width=True)
+
+        st.dataframe(
+            df.describe(include="all").T,
+            use_container_width=True
+        )
 
 
 # =====================================================
-# EXPLAINABLE AI
+# 9. EXPLAINABLE AI
 # =====================================================
 
 elif page == "Explainable AI":
@@ -981,7 +1068,11 @@ elif page == "Explainable AI":
     st.title("🧠 Explainable AI")
     st.caption("Understand model inputs and prediction behavior.")
 
-    model_files = list(MODEL_DIR.glob("*.pkl")) if MODEL_DIR.exists() else []
+    model_files = (
+        list(MODEL_DIR.glob("*.pkl"))
+        if MODEL_DIR.exists()
+        else []
+    )
 
     if model_files:
 
@@ -1000,13 +1091,17 @@ elif page == "Explainable AI":
 
             st.metric(
                 "Decision Threshold",
-                f"{threshold * 100:.2f}%" if threshold is not None else "N/A"
+                f"{threshold * 100:.2f}%"
+                if threshold is not None
+                else "N/A"
             )
 
             st.subheader("Model Input Features")
 
             st.dataframe(
-                pd.DataFrame({"Feature": features}),
+                pd.DataFrame({
+                    "Feature": features
+                }),
                 use_container_width=True
             )
 
@@ -1017,7 +1112,10 @@ elif page == "Explainable AI":
                 importance = pd.DataFrame({
                     "Feature": features,
                     "Importance": model.feature_importances_
-                }).sort_values("Importance", ascending=False)
+                }).sort_values(
+                    "Importance",
+                    ascending=False
+                )
 
                 fig = px.bar(
                     importance,
@@ -1032,23 +1130,29 @@ elif page == "Explainable AI":
                     paper_bgcolor="#0b1120"
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
 
             else:
+
                 st.info(
                     "Feature importance is not directly available "
                     "for this saved model pipeline."
                 )
 
         except Exception as e:
+
             st.error(f"Model information error: {e}")
 
     else:
+
         st.warning("No saved models found.")
 
 
 # =====================================================
-# REAL-TIME MONITORING
+# 10. REAL-TIME MONITORING
 # =====================================================
 
 elif page == "Real-Time Monitoring":
@@ -1078,7 +1182,7 @@ elif page == "Real-Time Monitoring":
 
 
 # =====================================================
-# FRAUD FORECASTING
+# 11. FRAUD FORECASTING
 # =====================================================
 
 elif page == "Fraud Forecasting":
@@ -1111,13 +1215,19 @@ elif page == "Fraud Forecasting":
                 errors="coerce"
             )
 
-            temp = temp.dropna(subset=[date_col])
+            temp = temp.dropna(
+                subset=[date_col]
+            )
 
             if not temp.empty:
 
                 temp["Date"] = temp[date_col].dt.date
 
-                daily = temp.groupby("Date").size().reset_index(name="Transactions")
+                daily = (
+                    temp.groupby("Date")
+                    .size()
+                    .reset_index(name="Transactions")
+                )
 
                 fig = px.line(
                     daily,
@@ -1132,12 +1242,17 @@ elif page == "Fraud Forecasting":
                     paper_bgcolor="#0b1120"
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
 
             else:
+
                 st.info("No valid date records found.")
 
         else:
+
             st.info("No date or time column found in this dataset.")
 
         st.warning(
@@ -1147,7 +1262,7 @@ elif page == "Fraud Forecasting":
 
 
 # =====================================================
-# GRAPH ANALYTICS
+# 12. GRAPH ANALYTICS
 # =====================================================
 
 elif page == "Graph Analytics":
@@ -1161,18 +1276,24 @@ elif page == "Graph Analytics":
 
         df = datasets[selected]
 
-        st.subheader("Available Entity Columns")
-
         entity_cols = [
             col for col in df.columns
-            if any(key in col.lower() for key in [
-                "customer", "merchant", "device", "location", "account"
-            ])
+            if any(
+                key in col.lower()
+                for key in [
+                    "customer",
+                    "merchant",
+                    "device",
+                    "location",
+                    "account"
+                ]
+            )
         ]
 
         if entity_cols:
 
-            st.write("Detected relationship fields:")
+            st.subheader("Available Entity Columns")
+
             st.write(entity_cols)
 
             selected_entity = st.selectbox(
@@ -1188,13 +1309,16 @@ elif page == "Graph Analytics":
                 .reset_index()
             )
 
-            entity_counts.columns = ["Entity", "Transactions"]
+            entity_counts.columns = [
+                "Entity",
+                "Transactions"
+            ]
 
             fig = px.bar(
                 entity_counts,
                 x="Entity",
                 y="Transactions",
-                title=f"Top Entities by Transaction Count"
+                title="Top Entities by Transaction Count"
             )
 
             fig.update_layout(
@@ -1202,10 +1326,16 @@ elif page == "Graph Analytics":
                 paper_bgcolor="#0b1120"
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
         else:
-            st.info("No customer, merchant or entity columns detected.")
+
+            st.info(
+                "No customer, merchant or entity columns detected."
+            )
 
         st.caption(
             "This is entity frequency analysis, not a connected graph network."
@@ -1217,5 +1347,6 @@ elif page == "Graph Analytics":
 # =====================================================
 
 st.sidebar.divider()
-st.sidebar.caption("FraudShield AI | Machine Learning Project")
+st.sidebar.caption("🛡️ FraudShield AI")
+st.sidebar.caption("Machine Learning Project")
 st.sidebar.caption("© 2026 FraudShield AI")
