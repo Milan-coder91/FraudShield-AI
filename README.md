@@ -6,7 +6,17 @@
   A Machine Learning project designed to identify potentially fraudulent financial transactions using Random Forest classification and an interactive Streamlit dashboard.
 </p>
 
+<p align="center">
+  <a href="https://github.com/Milan-coder91/FraudShield-AI">GitHub Repository</a> |
+  <a href="https://fraudshield-ai-milan.streamlit.app/">Live Dashboard</a>
+</p>
+
 ---
+
+## 🔗 Project Links
+
+- **GitHub Repository:** https://github.com/Milan-coder91/FraudShield-AI
+- **Live Streamlit Dashboard:** https://fraudshield-ai-milan.streamlit.app/
 
 ## 📌 Project Overview
 
@@ -44,15 +54,13 @@ It also provides an interactive **Streamlit Dashboard** where users can enter tr
 ## 📂 Project Structure
 
 ```text
-FraudGuard_AI/
+FraudShield_AI/
 │
 ├── data/
 │   ├── raw/
 │   └── processed/
 │
 ├── models/
-│
-├── notebooks/
 │
 ├── outputs/
 │
@@ -77,6 +85,8 @@ FraudGuard_AI/
 │   ├── fraudguard_final_evaluation.py
 │   └── fraudguard_results_visualization.py
 │
+├── .gitattributes
+├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
@@ -155,18 +165,24 @@ FraudShield AI provides an interactive dashboard with:
 - FRAUD or NORMAL prediction.
 - Separate trained models for each dataset.
 
+### 🚀 Try the Live Application
+
+Access the deployed dashboard here:
+
+**https://fraudshield-ai-milan.streamlit.app/**
+
 ## 🚀 Installation & Setup
 
 ### 1. Clone the Repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/Milan-coder91/FraudShield-AI.git
 ```
 
 ### 2. Navigate to the Project Folder
 
 ```bash
-cd FraudGuard_AI
+cd FraudShield-AI
 ```
 
 ### 3. Create a Virtual Environment
@@ -227,5 +243,8 @@ Data Analysis | Data Science | Machine Learning | Python
 ⭐ If you find this project interesting, consider giving the repository a star!
 
 **Project:** FraudShield AI  
-**Category:** Machine Learning & Data Science and Analysis 
+**Category:** Machine Learning & Data Science and Analysis  
 **Application:** Financial Fraud Detection
+
+**GitHub:** https://github.com/Milan-coder91/FraudShield-AI  
+**Live Demo:** https://fraudshield-ai-milan.streamlit.app/
