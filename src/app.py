@@ -42,7 +42,7 @@ MODEL_FILES = {
 }
 
 # =========================================================
-# 2. STYLING
+# 2. CUSTOM CSS
 # =========================================================
 
 st.markdown("""
@@ -51,28 +51,35 @@ st.markdown("""
     background: #080f1b;
     color: #eaf1fa;
 }
+
 .block-container {
     max-width: 1500px;
     padding-top: 2rem;
     padding-bottom: 2rem;
 }
+
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg,#020817,#10223a);
     border-right: 1px solid #263c56;
 }
+
 [data-testid="stSidebar"] * {
     color: #e4efff;
 }
+
 [data-testid="stSidebar"] div[role="radiogroup"] {
     gap: 5px;
 }
+
 [data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 9px;
     border-radius: 8px;
 }
+
 [data-testid="stSidebar"] div[role="radiogroup"] label:hover {
     background: #1a3554;
 }
+
 .hero {
     background: linear-gradient(115deg,#0799e8,#1761e8 58%,#174bd0);
     padding: 48px 42px;
@@ -80,23 +87,27 @@ st.markdown("""
     margin-bottom: 28px;
     box-shadow: 0 12px 35px rgba(0,80,200,.23);
 }
+
 .hero-title {
     font-size: 46px;
     font-weight: 850;
     color: white;
 }
+
 .hero-subtitle {
     font-size: 23px;
     font-weight: 700;
     color: white;
     margin-top: 18px;
 }
+
 .hero-description {
     color: #e1efff;
     font-size: 15px;
     margin-top: 20px;
     line-height: 1.8;
 }
+
 .project-card {
     background: linear-gradient(145deg,#111e30,#0d1929);
     border: 1px solid #243c57;
@@ -104,35 +115,21 @@ st.markdown("""
     padding: 25px;
     margin: 22px 0;
 }
+
 .project-heading {
     color: white;
     font-size: 27px;
     font-weight: 800;
     margin-bottom: 15px;
 }
+
 .project-text {
     color: #cbd5e1;
     font-size: 15px;
     line-height: 1.9;
 }
-.home-kpi {
-    background: #101d2d;
-    border: 1px solid #263e59;
-    padding: 20px;
-    border-radius: 13px;
-    min-height: 105px;
-}
-.home-kpi-label {
-    color: #9fb2c9;
-    font-size: 14px;
-}
-.home-kpi-value {
-    color: white;
-    font-size: 29px;
-    font-weight: 800;
-    margin-top: 8px;
-}
-.pipeline-container,.feature-container {
+
+.pipeline-container {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -140,9 +137,10 @@ st.markdown("""
     overflow-x: auto;
     padding: 14px 2px;
 }
-.pipeline-step,.feature-item {
+
+.pipeline-step {
     flex: 1 0 auto;
-    min-width: 120px;
+    min-width: 125px;
     white-space: nowrap;
     text-align: center;
     background: #142c45;
@@ -153,58 +151,92 @@ st.markdown("""
     font-size: 13px;
     font-weight: 650;
 }
+
 .pipeline-arrow {
     color: #38bdf8;
     font-size: 20px;
 }
+
+.feature-container {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.feature-item {
+    text-align: center;
+    background: #142c45;
+    border: 1px solid #315579;
+    border-radius: 10px;
+    padding: 17px 10px;
+    color: #eaf4ff;
+    font-size: 14px;
+    font-weight: 650;
+}
+
 div[data-testid="stMetric"] {
     background: #101d2d;
     border: 1px solid #263e59;
     padding: 15px;
     border-radius: 12px;
 }
+
 div[data-testid="stMetricLabel"] {
     color: #a9bdd5;
 }
+
 div[data-testid="stMetricValue"] {
     color: white;
 }
+
 .footer {
     text-align: center;
     color: #8295ac;
     padding: 25px;
     font-size: 13px;
 }
+
+@media(max-width: 800px) {
+    .feature-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-title {
+        font-size: 34px;
+    }
+
+    .hero-subtitle {
+        font-size: 19px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
 
 # =========================================================
-# 3. DATA FUNCTIONS
+# 3. DATA LOADING
 # =========================================================
 
 @st.cache_data(show_spinner=False)
-def read_csv_file(file_bytes):
-    try:
-        return pd.read_csv(io.BytesIO(file_bytes))
-    except Exception:
-        return None
+def load_csv(path):
+    return pd.read_csv(path)
 
 
 def find_dataset(filename):
-    search_folders = [
+    folders = [
         RAW_DIR,
         PROCESSED_DIR,
         DATA_DIR,
         BASE_DIR
     ]
 
-    for folder in search_folders:
-        candidate = folder / filename
-        if candidate.exists():
-            return candidate
+    for folder in folders:
+        path = folder / filename
+        if path.exists():
+            return path
 
-    for folder in search_folders:
+    for folder in folders:
         if folder.exists():
             matches = list(folder.rglob(filename))
             if matches:
@@ -221,7 +253,7 @@ def load_default_datasets():
 
         if path:
             try:
-                loaded[display_name] = pd.read_csv(path)
+                loaded[display_name] = load_csv(str(path))
             except Exception as error:
                 st.warning(f"Could not load {filename}: {error}")
 
@@ -235,28 +267,51 @@ datasets = load_default_datasets()
 datasets.update(st.session_state.uploaded_datasets)
 
 
+# =========================================================
+# 4. HELPER FUNCTIONS
+# =========================================================
+
 def target_column(df):
     possible = [
-        "IsFraud", "Fraudulent", "is_fraud",
-        "fraud", "Class"
+        "IsFraud",
+        "Fraudulent",
+        "is_fraud",
+        "fraud",
+        "Class"
     ]
-    return next((c for c in possible if c in df.columns), None)
+
+    return next(
+        (col for col in possible if col in df.columns),
+        None
+    )
 
 
 def amount_column(df):
     possible = [
-        "Amount", "Transaction_Amount",
-        "total_value", "TransactionAmount"
+        "Amount",
+        "Transaction_Amount",
+        "total_value",
+        "TransactionAmount"
     ]
-    return next((c for c in possible if c in df.columns), None)
+
+    return next(
+        (col for col in possible if col in df.columns),
+        None
+    )
 
 
 def date_column(df):
     possible = [
-        "TransactionDate", "Transaction_Date",
-        "date", "Transaction_Date_Time"
+        "TransactionDate",
+        "Transaction_Date",
+        "date",
+        "Transaction_Date_Time"
     ]
-    return next((c for c in possible if c in df.columns), None)
+
+    return next(
+        (col for col in possible if col in df.columns),
+        None
+    )
 
 
 def fraud_mask(df):
@@ -265,7 +320,11 @@ def fraud_mask(df):
     if target is None:
         return pd.Series(False, index=df.index)
 
-    values = pd.to_numeric(df[target], errors="coerce").fillna(0)
+    values = pd.to_numeric(
+        df[target],
+        errors="coerce"
+    ).fillna(0)
+
     return values == 1
 
 
@@ -278,12 +337,16 @@ def normal_count(df):
 
 
 def fraud_rate(df):
-    return fraud_count(df) / len(df) * 100 if len(df) else 0
+    if len(df) == 0:
+        return 0
+
+    return fraud_count(df) / len(df) * 100
 
 
 def model_files():
     if not MODEL_DIR.exists():
         return []
+
     return sorted(MODEL_DIR.glob("*.pkl"))
 
 
@@ -303,6 +366,7 @@ def load_model_file(filename):
 def get_model(saved):
     if isinstance(saved, dict):
         return saved.get("model")
+
     return saved
 
 
@@ -323,14 +387,21 @@ def show_chart(fig, height=420):
         paper_bgcolor="#080f1b",
         plot_bgcolor="#101d2d",
         font=dict(color="#eaf1fa", family="Arial"),
-        title=dict(font=dict(size=20, color="white"), x=0.02),
+        title=dict(
+            font=dict(size=20, color="white"),
+            x=0.02
+        ),
         margin=dict(l=35, r=25, t=65, b=45),
         legend=dict(bgcolor="rgba(0,0,0,0)"),
         xaxis=dict(gridcolor="#26394f"),
         yaxis=dict(gridcolor="#26394f")
     )
 
-    st.plotly_chart(fig, use_container_width=True, theme=None)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        theme=None
+    )
 
 
 def show_table(df, rows=500):
@@ -353,7 +424,7 @@ def dataset_selector(key="dataset_selector"):
 
 
 # =========================================================
-# 4. PDF REPORT GENERATOR
+# 5. PDF REPORT
 # =========================================================
 
 def create_pdf_report(df, title, dataset_name):
@@ -362,10 +433,15 @@ def create_pdf_report(df, title, dataset_name):
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet
         from reportlab.platypus import (
-            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            SimpleDocTemplate,
+            Paragraph,
+            Spacer,
+            Table,
+            TableStyle
         )
 
         buffer = io.BytesIO()
+
         document = SimpleDocTemplate(
             buffer,
             pagesize=A4,
@@ -378,17 +454,30 @@ def create_pdf_report(df, title, dataset_name):
         styles = getSampleStyleSheet()
         story = []
 
-        story.append(Paragraph("FraudShield AI", styles["Title"]))
-        story.append(Paragraph(title, styles["Heading2"]))
+        story.append(
+            Paragraph("FraudShield AI", styles["Title"])
+        )
+
+        story.append(
+            Paragraph(title, styles["Heading2"])
+        )
+
         story.append(Spacer(1, 12))
 
-        story.append(Paragraph(
-            f"Dataset: {dataset_name}", styles["Normal"]
-        ))
-        story.append(Paragraph(
-            f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}",
-            styles["Normal"]
-        ))
+        story.append(
+            Paragraph(
+                f"Dataset: {dataset_name}",
+                styles["Normal"]
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}",
+                styles["Normal"]
+            )
+        )
+
         story.append(Spacer(1, 12))
 
         summary = [
@@ -402,7 +491,11 @@ def create_pdf_report(df, title, dataset_name):
             ["Duplicate Rows", str(int(df.duplicated().sum()))]
         ]
 
-        table = Table(summary, colWidths=[230, 220])
+        table = Table(
+            summary,
+            colWidths=[230, 220]
+        )
+
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#174bd0")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -415,9 +508,13 @@ def create_pdf_report(df, title, dataset_name):
         story.append(table)
         story.append(Spacer(1, 18))
 
-        story.append(Paragraph("Column Information", styles["Heading2"]))
+        story.append(
+            Paragraph("Column Information", styles["Heading2"])
+        )
 
-        column_data = [["Column", "Data Type", "Missing", "Unique"]]
+        column_data = [
+            ["Column", "Data Type", "Missing", "Unique"]
+        ]
 
         for col in df.columns[:35]:
             column_data.append([
@@ -443,17 +540,23 @@ def create_pdf_report(df, title, dataset_name):
 
         story.append(column_table)
         story.append(Spacer(1, 15))
-        story.append(Paragraph(
-            "Report generated by FraudShield AI.",
-            styles["Italic"]
-        ))
+
+        story.append(
+            Paragraph(
+                "Report generated by FraudShield AI.",
+                styles["Italic"]
+            )
+        )
 
         document.build(story)
         buffer.seek(0)
+
         return buffer.getvalue()
 
     except ImportError:
-        st.error("PDF library missing. Add reportlab to requirements.txt.")
+        st.error(
+            "PDF library missing. Add reportlab to requirements.txt."
+        )
         return None
 
     except Exception as error:
@@ -461,13 +564,24 @@ def create_pdf_report(df, title, dataset_name):
         return None
 
 
-def report_download_button(df, dataset_name, report_title="Dataset Report"):
-    pdf = create_pdf_report(df, report_title, dataset_name)
+def report_download_button(
+    df,
+    dataset_name,
+    report_title="Dataset Report"
+):
+    pdf = create_pdf_report(
+        df,
+        report_title,
+        dataset_name
+    )
 
     if pdf:
-        # Stable unique key prevents StreamlitDuplicateElementId when
-        # multiple report buttons are rendered on the same page.
-        safe_name = re.sub(r"[^a-zA-Z0-9]+", "_", f"{dataset_name}_{report_title}").strip("_")
+        safe_name = re.sub(
+            r"[^a-zA-Z0-9]+",
+            "_",
+            f"{dataset_name}_{report_title}"
+        ).strip("_")
+
         st.download_button(
             "📄 Download PDF Report",
             data=pdf,
@@ -479,7 +593,7 @@ def report_download_button(df, dataset_name, report_title="Dataset Report"):
 
 
 # =========================================================
-# 5. SIDEBAR NAVIGATION
+# 6. SIDEBAR NAVIGATION
 # =========================================================
 
 pages = [
@@ -510,46 +624,179 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.divider()
-st.sidebar.caption("FraudShield AI | Fraud Intelligence Platform")
+st.sidebar.caption(
+    "FraudShield AI | Fraud Intelligence Platform"
+)
+
 
 # =========================================================
-# 6. HOME PAGE
+# 7. HOME PAGE
 # =========================================================
 
 if page == "🏠 app":
 
+    # -----------------------------------------------------
+    # HERO SECTION
+    # -----------------------------------------------------
+
     st.markdown("""
     <div class="hero">
-        <div class="hero-title">🛡️ FraudShield AI</div>
+
+        <div class="hero-title">
+            🛡️ FraudShield AI
+        </div>
+
         <div class="hero-subtitle">
             Enterprise Fraud Detection & Risk Intelligence Platform
         </div>
+
         <div class="hero-description">
             Real-Time Monitoring • Machine Learning • Risk Scoring •
             Fraud Investigation • Graph Analytics
         </div>
+
     </div>
     """, unsafe_allow_html=True)
 
+    # -----------------------------------------------------
+    # PROJECT OVERVIEW
+    # -----------------------------------------------------
+
+    st.markdown("""
+    <div class="project-card">
+
+        <div class="project-heading">
+            🚀 Project Overview
+        </div>
+
+        <div class="project-text">
+            FraudShield AI is a financial fraud detection platform
+            designed to identify suspicious transactions using
+            Machine Learning and data analytics.
+
+            It provides dataset analysis, fraud prediction,
+            transaction investigation, model insights and reports.
+        </div>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -----------------------------------------------------
+    # AI FRAUD DETECTION PIPELINE
+    # -----------------------------------------------------
+
+    st.subheader("⚡ AI Fraud Detection Pipeline")
+
+    st.markdown("""
+    <div class="pipeline-container">
+
+        <div class="pipeline-step">
+            📥 Data Input
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+            🧹 Data Cleaning
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+            ⚙️ Feature Engineering
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+            🤖 ML Model
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+            🔍 Fraud Analysis
+        </div>
+
+        <div class="pipeline-arrow">→</div>
+
+        <div class="pipeline-step">
+            📊 Final Result
+        </div>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -----------------------------------------------------
+    # PLATFORM FEATURES
+    # -----------------------------------------------------
+
+    st.subheader("✨ Platform Features")
+
+    features = [
+        "📊 Executive Dashboard",
+        "🧠 Explainable AI",
+        "📁 Dataset Analysis",
+        "📡 Monitoring",
+        "📈 EDA & Charts",
+        "📄 PDF Reports",
+        "🤖 ML Prediction",
+        "📤 Data Upload",
+        "🔎 Investigation",
+        "🔗 Graph Analytics"
+    ]
+
+    st.markdown(
+        '<div class="feature-container">' +
+        "".join(
+            f'<div class="feature-item">{feature}</div>'
+            for feature in features
+        ) +
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.divider()
+
+    # -----------------------------------------------------
+    # DASHBOARD FILTERS
+    # -----------------------------------------------------
+
     st.subheader("📅 Dashboard Filters")
-    selected_home = dataset_selector(key="home_dataset_selector")
+
+    selected_home = dataset_selector(
+        key="home_dataset_selector"
+    )
 
     if selected_home:
+
         source_df = datasets[selected_home].copy()
         home_df = source_df.copy()
+
         date_col = date_column(home_df)
         target_col = target_column(home_df)
         amount_col = amount_column(home_df)
 
+        # ---------------- DATE FILTERS ----------------
+
         if date_col:
-            home_df[date_col] = pd.to_datetime(home_df[date_col], errors="coerce")
+
+            home_df[date_col] = pd.to_datetime(
+                home_df[date_col],
+                errors="coerce"
+            )
+
             valid_dates = home_df[date_col].dropna()
 
             if not valid_dates.empty:
+
                 min_date = valid_dates.min().date()
                 max_date = valid_dates.max().date()
 
-                f1, f2, f3, f4 = st.columns([1.3, 1.3, 1, 1.2])
+                f1, f2, f3, f4 = st.columns(
+                    [1.3, 1.3, 1, 1.2]
+                )
+
                 with f1:
                     date_range = st.date_input(
                         "Start Date – End Date",
@@ -558,79 +805,182 @@ if page == "🏠 app":
                         max_value=max_date,
                         key="home_date_range"
                     )
+
                 with f2:
+
                     month_names = [
-                        "January", "February", "March", "April", "May", "June",
-                        "July", "August", "September", "October", "November", "December"
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December"
                     ]
+
                     selected_months = st.multiselect(
                         "Months",
                         month_names,
                         default=month_names,
                         key="home_month_filter"
                     )
+
                 with f3:
-                    available_years = sorted(valid_dates.dt.year.unique().tolist())
-                    year_options = ["All Years"] + [str(y) for y in available_years]
+
+                    available_years = sorted(
+                        valid_dates.dt.year.unique().tolist()
+                    )
+
+                    year_options = (
+                        ["All Years"] +
+                        [str(y) for y in available_years]
+                    )
+
                     selected_year = st.selectbox(
                         "Year",
                         year_options,
                         key="home_year_filter"
                     )
-                with f4:
-                    st.caption(f"Available data: {min_date} to {max_date}")
 
-                if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
+                with f4:
+                    st.caption(
+                        f"Available data: {min_date} to {max_date}"
+                    )
+
+                # Date range filtering
+
+                if (
+                    isinstance(date_range, (tuple, list))
+                    and len(date_range) == 2
+                ):
+
                     start_date, end_date = date_range
+
                     home_df = home_df[
-                        home_df[date_col].dt.date.between(start_date, end_date)
+                        home_df[date_col].dt.date.between(
+                            start_date,
+                            end_date
+                        )
                     ]
+
+                # Month filtering
 
                 month_numbers = [
                     month_names.index(month) + 1
                     for month in selected_months
                 ]
-                home_df = home_df[home_df[date_col].dt.month.isin(month_numbers)]
+
+                home_df = home_df[
+                    home_df[date_col].dt.month.isin(
+                        month_numbers
+                    )
+                ]
+
+                # Year filtering
 
                 if selected_year != "All Years":
-                    home_df = home_df[
-                        home_df[date_col].dt.year == int(selected_year)
-                    ]
-            else:
-                st.warning("Date column exists, but no valid dates were found. Date filters are unavailable.")
-        else:
-            st.info("This dataset has no recognized date column. Date, month and year filters are unavailable.")
 
-        st.caption(f"Dataset: {selected_home} | Filtered records: {len(home_df):,} of {len(source_df):,}")
+                    home_df = home_df[
+                        home_df[date_col].dt.year ==
+                        int(selected_year)
+                    ]
+
+            else:
+                st.warning(
+                    "Date column exists, but no valid dates were found."
+                )
+
+        else:
+            st.info(
+                "This dataset has no recognized date column. "
+                "Date filters are unavailable."
+            )
+
+        st.caption(
+            f"Dataset: {selected_home} | "
+            f"Filtered records: {len(home_df):,} "
+            f"of {len(source_df):,}"
+        )
+
+        # -------------------------------------------------
+        # KPI CARDS
+        # -------------------------------------------------
 
         total_transactions = len(home_df)
-        total_fraud = fraud_count(home_df) if target_col else 0
-        current_fraud_rate = fraud_rate(home_df) if target_col else 0
+
+        total_fraud = (
+            fraud_count(home_df)
+            if target_col else 0
+        )
+
+        current_fraud_rate = (
+            fraud_rate(home_df)
+            if target_col else 0
+        )
+
         total_amount = (
-            pd.to_numeric(home_df[amount_col], errors="coerce").sum()
+            pd.to_numeric(
+                home_df[amount_col],
+                errors="coerce"
+            ).sum()
             if amount_col else 0
         )
-        available_models = len(model_files())
 
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric("📄 Total Transactions", f"{total_transactions:,}")
-        k2.metric("🚨 Total Fraud", f"{total_fraud:,}")
-        k3.metric("⚠️ Fraud Rate", f"{current_fraud_rate:.2f}%")
-        k4.metric("💰 Total Amount", f"{total_amount:,.2f}" if amount_col else "N/A")
+
+        k1.metric(
+            "📄 Total Transactions",
+            f"{total_transactions:,}"
+        )
+
+        k2.metric(
+            "🚨 Total Fraud",
+            f"{total_fraud:,}"
+        )
+
+        k3.metric(
+            "⚠️ Fraud Rate",
+            f"{current_fraud_rate:.2f}%"
+        )
+
+        k4.metric(
+            "💰 Total Amount",
+            f"{total_amount:,.2f}" if amount_col else "N/A"
+        )
 
         st.divider()
+
+        # -------------------------------------------------
+        # FRAUD VS NORMAL + DAILY TRANSACTIONS
+        # -------------------------------------------------
+
         st.subheader("📊 Fraud & Transaction Overview")
 
         if target_col:
+
             fraud_total = fraud_count(home_df)
             normal_total = normal_count(home_df)
+
             left, right = st.columns(2)
 
             with left:
+
                 status_df = pd.DataFrame({
-                    "Transaction Status": ["Normal", "Fraud"],
-                    "Transactions": [normal_total, fraud_total]
+                    "Transaction Status": [
+                        "Normal",
+                        "Fraud"
+                    ],
+                    "Transactions": [
+                        normal_total,
+                        fraud_total
+                    ]
                 })
+
                 fig = px.pie(
                     status_df,
                     names="Transaction Status",
@@ -638,235 +988,398 @@ if page == "🏠 app":
                     hole=0.55,
                     title="Fraud vs Normal Transactions",
                     color="Transaction Status",
-                    color_discrete_map={"Normal": "#16a085", "Fraud": "#e74c3c"}
+                    color_discrete_map={
+                        "Normal": "#16a085",
+                        "Fraud": "#e74c3c"
+                    }
                 )
+
                 show_chart(fig)
 
             with right:
+
                 if date_col and home_df[date_col].notna().any():
+
                     daily = (
                         home_df.dropna(subset=[date_col])
-                        .groupby(home_df[date_col].dt.floor("D"))
+                        .groupby(
+                            home_df[date_col].dt.floor("D")
+                        )
                         .size()
                         .reset_index(name="Transactions")
                     )
-                    daily.columns = ["Date", "Transactions"]
+
+                    daily.columns = [
+                        "Date",
+                        "Transactions"
+                    ]
+
                     fig = px.line(
-                        daily, x="Date", y="Transactions", markers=True,
+                        daily,
+                        x="Date",
+                        y="Transactions",
+                        markers=True,
                         title="Daily Transactions"
                     )
+
                     show_chart(fig)
+
                 else:
-                    st.info("Daily transaction trend requires a valid date column.")
+                    st.info(
+                        "Daily transaction trend requires valid dates."
+                    )
+
+            # -------------------------------------------------
+            # MONTHLY FRAUD TREND
+            # -------------------------------------------------
 
             if date_col and home_df[date_col].notna().any():
-                trend_data = home_df.dropna(subset=[date_col]).copy()
-                trend_data["_fraud_flag"] = fraud_mask(trend_data).astype(int)
+
+                trend_data = home_df.dropna(
+                    subset=[date_col]
+                ).copy()
+
+                trend_data["_fraud_flag"] = (
+                    fraud_mask(trend_data).astype(int)
+                )
 
                 monthly = (
                     trend_data.set_index(date_col)["_fraud_flag"]
-                    .resample("MS").sum().reset_index()
+                    .resample("MS")
+                    .sum()
+                    .reset_index()
                 )
-                monthly.columns = ["Month", "Fraud Cases"]
+
+                monthly.columns = [
+                    "Month",
+                    "Fraud Cases"
+                ]
+
                 fig = px.line(
-                    monthly, x="Month", y="Fraud Cases", markers=True,
+                    monthly,
+                    x="Month",
+                    y="Fraud Cases",
+                    markers=True,
                     title="Monthly Fraud Trend"
                 )
+
                 show_chart(fig)
+
+                # -------------------------------------------------
+                # YEARLY FRAUD TREND
+                # -------------------------------------------------
 
                 yearly = (
-                    trend_data.assign(Year=trend_data[date_col].dt.year)
-                    .groupby("Year")["_fraud_flag"].sum()
+                    trend_data.assign(
+                        Year=trend_data[date_col].dt.year
+                    )
+                    .groupby("Year")["_fraud_flag"]
+                    .sum()
                     .reset_index(name="Fraud Cases")
                 )
+
                 fig = px.bar(
-                    yearly, x="Year", y="Fraud Cases",
-                    title="Yearly Fraud Trend", color="Fraud Cases",
+                    yearly,
+                    x="Year",
+                    y="Fraud Cases",
+                    title="Yearly Fraud Trend",
+                    color="Fraud Cases",
                     color_continuous_scale="Reds"
                 )
+
                 show_chart(fig)
 
+        else:
+            st.warning(
+                "Fraud target column not found in this dataset."
+            )
+
+        # -------------------------------------------------
+        # AMOUNT ANALYSIS
+        # -------------------------------------------------
+
         if amount_col:
-            amount_values = pd.to_numeric(home_df[amount_col], errors="coerce").dropna()
+
+            amount_values = pd.to_numeric(
+                home_df[amount_col],
+                errors="coerce"
+            ).dropna()
+
             if not amount_values.empty:
-                st.subheader("💰 Transaction Amount Analysis")
+
+                st.subheader(
+                    "💰 Transaction Amount Analysis"
+                )
+
                 left, right = st.columns(2)
+
                 with left:
+
                     fig = px.histogram(
-                        amount_values, x=amount_values, nbins=40,
+                        x=amount_values,
+                        nbins=40,
                         title="Transaction Amount Distribution"
                     )
+
                     show_chart(fig)
+
                 with right:
+
                     amount_summary = pd.DataFrame({
-                        "Metric": ["Minimum", "Average", "Median", "Maximum", "Total"],
+                        "Metric": [
+                            "Minimum",
+                            "Average",
+                            "Median",
+                            "Maximum",
+                            "Total"
+                        ],
                         "Amount": [
-                            amount_values.min(), amount_values.mean(),
-                            amount_values.median(), amount_values.max(),
+                            amount_values.min(),
+                            amount_values.mean(),
+                            amount_values.median(),
+                            amount_values.max(),
                             amount_values.sum()
                         ]
                     })
-                    st.dataframe(amount_summary, use_container_width=True, hide_index=True)
+
+                    st.dataframe(
+                        amount_summary,
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+        # -------------------------------------------------
+        # TRANSACTION TYPE AND LOCATION ANALYSIS
+        # -------------------------------------------------
 
         transaction_type_col = next(
-            (c for c in ["TransactionType", "Merchant_Category", "Payment_Method", "Device_Type", "channel"]
-             if c in home_df.columns),
+            (
+                c for c in [
+                    "TransactionType",
+                    "Merchant_Category",
+                    "Payment_Method",
+                    "Device_Type",
+                    "channel"
+                ]
+                if c in home_df.columns
+            ),
             None
         )
+
         location_col = next(
-            (c for c in ["Location", "location", "MerchantID"]
-             if c in home_df.columns),
+            (
+                c for c in [
+                    "Location",
+                    "location",
+                    "MerchantID"
+                ]
+                if c in home_df.columns
+            ),
             None
         )
 
         if transaction_type_col or location_col:
-            st.subheader("🧭 Transaction Category & Location Analysis")
+
+            st.subheader(
+                "🧭 Transaction Category & Location Analysis"
+            )
+
             chart_cols = st.columns(2)
+
             if transaction_type_col:
+
                 with chart_cols[0]:
+
                     type_counts = (
-                        home_df[transaction_type_col].astype(str).value_counts().head(15)
-                        .rename_axis(transaction_type_col).reset_index(name="Transactions")
+                        home_df[transaction_type_col]
+                        .astype(str)
+                        .value_counts()
+                        .head(15)
+                        .rename_axis(transaction_type_col)
+                        .reset_index(name="Transactions")
                     )
+
                     fig = px.bar(
-                        type_counts, x=transaction_type_col, y="Transactions",
+                        type_counts,
+                        x=transaction_type_col,
+                        y="Transactions",
                         title=f"Transactions by {transaction_type_col}",
-                        color="Transactions", color_continuous_scale="Blues"
+                        color="Transactions",
+                        color_continuous_scale="Blues"
                     )
-                    show_chart(fig)
-            if location_col:
-                with chart_cols[1]:
-                    location_counts = (
-                        home_df[location_col].astype(str).value_counts().head(15)
-                        .rename_axis(location_col).reset_index(name="Transactions")
-                    )
-                    fig = px.bar(
-                        location_counts, x=location_col, y="Transactions",
-                        title=f"Transactions by {location_col}",
-                        color="Transactions", color_continuous_scale="Teal"
-                    )
+
                     show_chart(fig)
 
+            if location_col:
+
+                with chart_cols[1]:
+
+                    location_counts = (
+                        home_df[location_col]
+                        .astype(str)
+                        .value_counts()
+                        .head(15)
+                        .rename_axis(location_col)
+                        .reset_index(name="Transactions")
+                    )
+
+                    fig = px.bar(
+                        location_counts,
+                        x=location_col,
+                        y="Transactions",
+                        title=f"Transactions by {location_col}",
+                        color="Transactions",
+                        color_continuous_scale="Teal"
+                    )
+
+                    show_chart(fig)
+
+        # -------------------------------------------------
+        # FILTERED RECORDS
+        # -------------------------------------------------
+
         st.divider()
+
         st.subheader("📋 Filtered Transaction Records")
+
         show_table(home_df)
+
         st.download_button(
             "⬇️ Download Filtered Transactions",
-            data=home_df.to_csv(index=False).encode("utf-8"),
+            data=home_df.to_csv(
+                index=False
+            ).encode("utf-8"),
             file_name="fraudshield_filtered_transactions.csv",
             mime="text/csv",
             key="home_filtered_transactions_csv"
         )
 
     else:
-        st.warning("No datasets found. Upload a CSV from Data Upload & Reports.")
-
-    st.markdown("""
-    <div class="project-card">
-        <div class="project-heading">🚀 Project Overview</div>
-        <div class="project-text">
-            FraudShield AI is a financial fraud detection platform designed to
-            identify suspicious transactions using Machine Learning and data analytics.
-            It provides dataset analysis, fraud prediction, transaction investigation,
-            model insights and reports.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.subheader("⚡ AI Fraud Detection Pipeline")
-    st.markdown("""
-    <div class="pipeline-container">
-        <div class="pipeline-step">📥 Data Input</div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">🧹 Data Cleaning</div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">⚙️ Feature Engineering</div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">🤖 ML Model</div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">🔍 Fraud Analysis</div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">📊 Final Result</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.subheader("✨ Platform Features")
-    features = [
-        "📊 Executive Dashboard", "📁 Dataset Analysis", "📈 EDA & Charts",
-        "🤖 ML Prediction", "🔎 Investigation", "🧠 Explainable AI",
-        "📡 Monitoring", "📄 PDF Reports", "📤 Data Upload", "🔗 Graph Analytics"
-    ]
-    feature_cols = st.columns(5)
-
-    for i, feature in enumerate(features):
-        with feature_cols[i % 5]:
-            st.info(feature)
+        st.warning(
+            "No datasets found. Upload a CSV from Data Upload & Reports."
+        )
 
 
 # =========================================================
-# 7. EXECUTIVE DASHBOARD
+# 8. EXECUTIVE DASHBOARD
 # =========================================================
 
 elif page == "📊 Executive Dashboard":
 
     st.title("🛡️ FraudShield AI")
-    st.subheader("Enterprise Fraud Detection & Risk Intelligence Platform")
-    st.caption("Machine Learning • Risk Scoring • Fraud Analytics")
+    st.subheader(
+        "Enterprise Fraud Detection & Risk Intelligence Platform"
+    )
+
+    st.caption(
+        "Machine Learning • Risk Scoring • Fraud Analytics"
+    )
 
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
+
         target = target_column(df)
         amount = amount_column(df)
         date = date_column(df)
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("📄 Transactions", f"{len(df):,}")
-        c2.metric("🚨 Fraud Cases", f"{fraud_count(df):,}")
-        c3.metric("⚠️ Fraud Rate", f"{fraud_rate(df):.2f}%")
-        c4.metric("✅ Normal Cases", f"{normal_count(df):,}")
+
+        c1.metric(
+            "📄 Transactions",
+            f"{len(df):,}"
+        )
+
+        c2.metric(
+            "🚨 Fraud Cases",
+            f"{fraud_count(df):,}"
+        )
+
+        c3.metric(
+            "⚠️ Fraud Rate",
+            f"{fraud_rate(df):.2f}%"
+        )
+
+        c4.metric(
+            "✅ Normal Cases",
+            f"{normal_count(df):,}"
+        )
 
         st.divider()
+
         st.subheader("📊 Transaction Intelligence")
 
         left, right = st.columns(2)
 
         with left:
+
             if target:
+
                 fig = px.pie(
-                    names=["Normal Transactions", "Fraud Cases"],
-                    values=[normal_count(df), fraud_count(df)],
+                    names=[
+                        "Normal Transactions",
+                        "Fraud Cases"
+                    ],
+                    values=[
+                        normal_count(df),
+                        fraud_count(df)
+                    ],
                     hole=0.55,
                     title="Fraud vs Normal Transactions",
-                    color_discrete_sequence=["#16a085", "#e74c3c"]
+                    color_discrete_sequence=[
+                        "#16a085",
+                        "#e74c3c"
+                    ]
                 )
+
                 show_chart(fig)
+
             else:
                 st.info("Fraud target column not available.")
 
         with right:
+
             if amount:
-                amount_data = pd.to_numeric(df[amount], errors="coerce").dropna()
+
+                amount_data = pd.to_numeric(
+                    df[amount],
+                    errors="coerce"
+                ).dropna()
+
                 fig = px.histogram(
                     x=amount_data,
                     nbins=40,
                     title="Transaction Amount Distribution",
                     color_discrete_sequence=["#38bdf8"]
                 )
+
                 show_chart(fig)
+
             else:
                 st.info("Amount column not available.")
 
         if date and target:
+
             st.subheader("📈 Fraud Transaction Trend")
 
             trend_df = df[[date, target]].copy()
-            trend_df[date] = pd.to_datetime(trend_df[date], errors="coerce")
-            trend_df[target] = pd.to_numeric(trend_df[target], errors="coerce")
+
+            trend_df[date] = pd.to_datetime(
+                trend_df[date],
+                errors="coerce"
+            )
+
+            trend_df[target] = pd.to_numeric(
+                trend_df[target],
+                errors="coerce"
+            )
+
             trend_df = trend_df.dropna()
 
             if not trend_df.empty:
+
                 trend = (
                     trend_df.set_index(date)
                     .resample("D")[target]
@@ -881,21 +1394,37 @@ elif page == "📊 Executive Dashboard":
                     markers=True,
                     title="Daily Fraud Transactions"
                 )
+
                 show_chart(fig)
 
         if target:
+
             category = next(
-                (c for c in [
-                    "Merchant_Category", "TransactionType",
-                    "Payment_Method", "Device_Type", "Location"
-                ] if c in df.columns),
+                (
+                    c for c in [
+                        "Merchant_Category",
+                        "TransactionType",
+                        "Payment_Method",
+                        "Device_Type",
+                        "Location"
+                    ]
+                    if c in df.columns
+                ),
                 None
             )
 
             if category:
+
                 fraud_records = df[fraud_mask(df)]
-                counts = fraud_records[category].astype(str).value_counts().head(15)
-                counts = counts.rename_axis(category).reset_index(name="Fraud Cases")
+
+                counts = (
+                    fraud_records[category]
+                    .astype(str)
+                    .value_counts()
+                    .head(15)
+                    .rename_axis(category)
+                    .reset_index(name="Fraud Cases")
+                )
 
                 fig = px.bar(
                     counts,
@@ -905,41 +1434,69 @@ elif page == "📊 Executive Dashboard":
                     title=f"Fraud Cases by {category}",
                     color_continuous_scale="Blues"
                 )
+
                 show_chart(fig)
 
         st.subheader("📋 Transaction Records")
-        fraud_only = st.checkbox("Show only fraud transactions", key="exec_fraud_only")
-        display_df = df[fraud_mask(df)] if fraud_only and target else df
+
+        fraud_only = st.checkbox(
+            "Show only fraud transactions",
+            key="exec_fraud_only"
+        )
+
+        display_df = (
+            df[fraud_mask(df)]
+            if fraud_only and target
+            else df
+        )
 
         show_table(display_df)
 
         st.download_button(
             "⬇️ Download Transaction CSV",
-            data=display_df.to_csv(index=False).encode("utf-8"),
+            data=display_df.to_csv(
+                index=False
+            ).encode("utf-8"),
             file_name="fraudshield_transactions.csv",
-            mime="text/csv"
+            mime="text/csv",
+            key="exec_transaction_csv"
         )
 
-        report_download_button(df, selected, "Executive Dashboard Report")
+        report_download_button(
+            df,
+            selected,
+            "Executive Dashboard Report"
+        )
 
 
 # =========================================================
-# 8. DATASET OVERVIEW
+# 9. DATASET OVERVIEW
 # =========================================================
 
 elif page == "📁 Dataset Overview":
 
     st.title("📁 Dataset Overview")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
 
         c1, c2, c3, c4 = st.columns(4)
+
         c1.metric("Total Rows", f"{len(df):,}")
         c2.metric("Total Columns", df.shape[1])
-        c3.metric("Missing Values", int(df.isnull().sum().sum()))
-        c4.metric("Duplicate Rows", int(df.duplicated().sum()))
+
+        c3.metric(
+            "Missing Values",
+            int(df.isnull().sum().sum())
+        )
+
+        c4.metric(
+            "Duplicate Rows",
+            int(df.duplicated().sum())
+        )
 
         st.subheader("Dataset Preview")
         show_table(df)
@@ -953,42 +1510,76 @@ elif page == "📁 Dataset Overview":
             "Unique Values": df.nunique().values
         })
 
-        st.dataframe(info, use_container_width=True, hide_index=True)
+        st.dataframe(
+            info,
+            use_container_width=True,
+            hide_index=True
+        )
 
         st.subheader("Statistical Summary")
+
         st.dataframe(
             df.describe(include="all").T,
             use_container_width=True
         )
 
-        report_download_button(df, selected, "Dataset Overview Report")
+        report_download_button(
+            df,
+            selected,
+            "Dataset Overview Report"
+        )
 
 
 # =========================================================
-# 9. EDA DASHBOARD
+# 10. EDA DASHBOARD
 # =========================================================
 
 elif page == "📈 EDA Dashboard":
 
     st.title("📈 Exploratory Data Analysis")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
 
-        numeric = df.select_dtypes(include=np.number)
-        categorical = df.select_dtypes(include=["object", "category"])
+        numeric = df.select_dtypes(
+            include=np.number
+        )
+
+        categorical = df.select_dtypes(
+            include=["object", "category"]
+        )
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("Numerical Columns", len(numeric.columns))
-        c2.metric("Categorical Columns", len(categorical.columns))
-        c3.metric("Missing Values", int(df.isnull().sum().sum()))
+
+        c1.metric(
+            "Numerical Columns",
+            len(numeric.columns)
+        )
+
+        c2.metric(
+            "Categorical Columns",
+            len(categorical.columns)
+        )
+
+        c3.metric(
+            "Missing Values",
+            int(df.isnull().sum().sum())
+        )
 
         if not numeric.empty:
+
             st.subheader("📊 Numerical Statistical Analysis")
-            st.dataframe(numeric.describe().T, use_container_width=True)
+
+            st.dataframe(
+                numeric.describe().T,
+                use_container_width=True
+            )
 
             st.subheader("🔥 Correlation Heatmap")
+
             correlation = numeric.corr()
 
             fig = px.imshow(
@@ -1000,10 +1591,15 @@ elif page == "📈 EDA Dashboard":
                 zmax=1,
                 title="Feature Correlation Heatmap"
             )
+
             show_chart(fig, 650)
 
             st.subheader("📉 Numerical Feature Distribution")
-            selected_num = st.selectbox("Select Numerical Feature", numeric.columns)
+
+            selected_num = st.selectbox(
+                "Select Numerical Feature",
+                numeric.columns
+            )
 
             fig = px.histogram(
                 df,
@@ -1012,6 +1608,7 @@ elif page == "📈 EDA Dashboard":
                 marginal="box",
                 title=f"Distribution of {selected_num}"
             )
+
             show_chart(fig)
 
             fig = px.box(
@@ -1019,11 +1616,17 @@ elif page == "📈 EDA Dashboard":
                 y=selected_num,
                 title=f"Box Plot of {selected_num}"
             )
+
             show_chart(fig)
 
         st.subheader("🧩 Missing Values Analysis")
+
         missing = df.isnull().sum().reset_index()
-        missing.columns = ["Column", "Missing Values"]
+
+        missing.columns = [
+            "Column",
+            "Missing Values"
+        ]
 
         fig = px.bar(
             missing,
@@ -1033,18 +1636,23 @@ elif page == "📈 EDA Dashboard":
             title="Missing Values by Column",
             color_continuous_scale="Blues"
         )
+
         show_chart(fig)
 
         if len(categorical.columns):
+
             st.subheader("Categorical Analysis")
+
             selected_col = st.selectbox(
                 "Select Categorical Feature",
                 categorical.columns
             )
 
             counts = (
-                df[selected_col].astype(str)
-                .value_counts().head(20)
+                df[selected_col]
+                .astype(str)
+                .value_counts()
+                .head(20)
                 .rename_axis(selected_col)
                 .reset_index(name="Count")
             )
@@ -1056,29 +1664,40 @@ elif page == "📈 EDA Dashboard":
                 color="Count",
                 title=f"Distribution of {selected_col}"
             )
+
             show_chart(fig)
 
-        report_download_button(df, selected, "EDA Analysis Report")
+        report_download_button(
+            df,
+            selected,
+            "EDA Analysis Report"
+        )
 
 
 # =========================================================
-# 10. FEATURE ENGINEERING
+# 11. FEATURE ENGINEERING
 # =========================================================
 
 elif page == "⚙️ Feature Engineering":
 
     st.title("⚙️ Feature Engineering")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
 
-        numeric = df.select_dtypes(include=np.number).columns.tolist()
+        numeric = df.select_dtypes(
+            include=np.number
+        ).columns.tolist()
+
         categorical = df.select_dtypes(
             include=["object", "category"]
         ).columns.tolist()
 
         c1, c2, c3 = st.columns(3)
+
         c1.metric("Total Features", df.shape[1])
         c2.metric("Numerical Features", len(numeric))
         c3.metric("Categorical Features", len(categorical))
@@ -1098,20 +1717,31 @@ elif page == "⚙️ Feature Engineering":
             "Missing Values": df.isnull().sum().values
         })
 
-        st.dataframe(feature_info, use_container_width=True, hide_index=True)
+        st.dataframe(
+            feature_info,
+            use_container_width=True,
+            hide_index=True
+        )
 
         if numeric:
+
             selected_feature = st.selectbox(
                 "Select feature for transformation preview",
                 numeric
             )
 
             transformed = pd.to_numeric(
-                df[selected_feature], errors="coerce"
+                df[selected_feature],
+                errors="coerce"
             )
 
-            st.write("Log transformation preview (positive values only)")
-            log_values = np.log1p(transformed.clip(lower=0))
+            st.write(
+                "Log transformation preview (positive values only)"
+            )
+
+            log_values = np.log1p(
+                transformed.clip(lower=0)
+            )
 
             preview = pd.DataFrame({
                 "Original": transformed.head(100),
@@ -1124,42 +1754,65 @@ elif page == "⚙️ Feature Engineering":
                 y="Log Transformed",
                 title="Original vs Log Transformed Values"
             )
+
             show_chart(fig)
 
             st.download_button(
                 "⬇️ Download Feature Preview",
-                data=preview.to_csv(index=False).encode("utf-8"),
+                data=preview.to_csv(
+                    index=False
+                ).encode("utf-8"),
                 file_name="feature_transformation_preview.csv",
-                mime="text/csv"
+                mime="text/csv",
+                key="feature_preview_csv"
             )
 
-        st.info("This page provides feature inspection and transformation previews. Original dataset is not modified.")
+        st.info(
+            "This page provides feature inspection and transformation "
+            "previews. Original dataset is not modified."
+        )
 
 
 # =========================================================
-# 11. FRAUD INTELLIGENCE
+# 12. FRAUD INTELLIGENCE
 # =========================================================
 
 elif page == "🕵️ Fraud Intelligence":
 
     st.title("🕵️ Fraud Intelligence")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
         target = target_column(df)
 
         if target:
+
             fraud_records = df[fraud_mask(df)]
 
             c1, c2, c3 = st.columns(3)
-            c1.metric("Fraud Cases", len(fraud_records))
-            c2.metric("Normal Cases", normal_count(df))
-            c3.metric("Fraud Rate", f"{fraud_rate(df):.2f}%")
+
+            c1.metric(
+                "Fraud Cases",
+                len(fraud_records)
+            )
+
+            c2.metric(
+                "Normal Cases",
+                normal_count(df)
+            )
+
+            c3.metric(
+                "Fraud Rate",
+                f"{fraud_rate(df):.2f}%"
+            )
 
             amount = amount_column(df)
 
             if amount:
+
                 fig = px.histogram(
                     fraud_records,
                     x=amount,
@@ -1168,20 +1821,30 @@ elif page == "🕵️ Fraud Intelligence":
                     title="Fraud Transaction Amount Distribution",
                     color_discrete_sequence=["#ef5350"]
                 )
+
                 show_chart(fig)
 
             category = next(
-                (c for c in [
-                    "Merchant_Category", "TransactionType",
-                    "Payment_Method", "Device_Type", "Location"
-                ] if c in df.columns),
+                (
+                    c for c in [
+                        "Merchant_Category",
+                        "TransactionType",
+                        "Payment_Method",
+                        "Device_Type",
+                        "Location"
+                    ]
+                    if c in df.columns
+                ),
                 None
             )
 
             if category:
+
                 counts = (
-                    fraud_records[category].astype(str)
-                    .value_counts().head(15)
+                    fraud_records[category]
+                    .astype(str)
+                    .value_counts()
+                    .head(15)
                     .rename_axis(category)
                     .reset_index(name="Fraud Cases")
                 )
@@ -1194,6 +1857,7 @@ elif page == "🕵️ Fraud Intelligence":
                     title=f"Fraud by {category}",
                     color_continuous_scale="Reds"
                 )
+
                 show_chart(fig)
 
             st.subheader("Fraud Transaction Records")
@@ -1201,16 +1865,20 @@ elif page == "🕵️ Fraud Intelligence":
 
             st.download_button(
                 "⬇️ Download Fraud Records",
-                data=fraud_records.to_csv(index=False).encode("utf-8"),
+                data=fraud_records.to_csv(
+                    index=False
+                ).encode("utf-8"),
                 file_name="fraud_records.csv",
-                mime="text/csv"
+                mime="text/csv",
+                key="fraud_records_csv"
             )
+
         else:
             st.warning("Fraud target column not found.")
 
 
 # =========================================================
-# 12. MODEL COMPARISON
+# 13. MODEL COMPARISON
 # =========================================================
 
 elif page == "🤖 Model Comparison":
@@ -1220,6 +1888,7 @@ elif page == "🤖 Model Comparison":
     rows = []
 
     for label, filename in MODEL_FILES.items():
+
         saved = load_model_file(filename)
 
         if saved is None:
@@ -1247,10 +1916,19 @@ elif page == "🤖 Model Comparison":
         })
 
     if rows:
+
         comparison = pd.DataFrame(rows)
 
-        st.metric("Available Models", len(comparison))
-        st.dataframe(comparison, use_container_width=True, hide_index=True)
+        st.metric(
+            "Available Models",
+            len(comparison)
+        )
+
+        st.dataframe(
+            comparison,
+            use_container_width=True,
+            hide_index=True
+        )
 
         fig = px.bar(
             comparison,
@@ -1259,20 +1937,27 @@ elif page == "🤖 Model Comparison":
             color="Algorithm",
             title="Model Feature Count"
         )
+
         show_chart(fig)
 
         st.download_button(
             "⬇️ Download Model Information",
-            data=comparison.to_csv(index=False).encode("utf-8"),
+            data=comparison.to_csv(
+                index=False
+            ).encode("utf-8"),
             file_name="model_comparison.csv",
-            mime="text/csv"
+            mime="text/csv",
+            key="model_comparison_csv"
         )
+
     else:
-        st.warning("No model files found in models folder.")
+        st.warning(
+            "No model files found in models folder."
+        )
 
 
 # =========================================================
-# 13. FRAUD PREDICTION
+# 14. FRAUD PREDICTION
 # =========================================================
 
 elif page == "🚨 Fraud Prediction":
@@ -1284,45 +1969,79 @@ elif page == "🚨 Fraud Prediction":
         list(MODEL_FILES.keys())
     )
 
-    saved = load_model_file(MODEL_FILES[selected_model])
+    saved = load_model_file(
+        MODEL_FILES[selected_model]
+    )
 
     if saved is None:
+
         st.error("Selected model file was not found.")
 
     elif not isinstance(saved, dict):
-        st.error("Saved model must contain model, threshold and features.")
+
+        st.error(
+            "Saved model must contain model, threshold and features."
+        )
 
     else:
+
         model = get_model(saved)
         features = get_features(saved, model)
         threshold = saved.get("threshold", 0.5)
 
         if model is None or not features:
-            st.error("Model or feature list is missing.")
+
+            st.error(
+                "Model or feature list is missing."
+            )
+
         else:
-            st.write("Algorithm:", type(model).__name__)
-            st.write("Saved threshold:", threshold)
+
+            st.write(
+                "Algorithm:",
+                type(model).__name__
+            )
+
+            st.write(
+                "Saved threshold:",
+                threshold
+            )
 
             st.caption(
                 "Enter values in the same format used during model training."
             )
 
             with st.form("fraud_prediction_form"):
+
                 values = {}
                 input_columns = st.columns(2)
 
                 categorical_words = [
-                    "location", "merchant_category",
-                    "transactiontype", "payment_method",
-                    "device_type", "suspicious_keyword",
-                    "channel", "promo_id"
+                    "location",
+                    "merchant_category",
+                    "transactiontype",
+                    "payment_method",
+                    "device_type",
+                    "suspicious_keyword",
+                    "channel",
+                    "promo_id"
                 ]
 
                 for i, feature in enumerate(features):
+
                     with input_columns[i % 2]:
-                        if any(word in feature.lower() for word in categorical_words):
-                            values[feature] = st.text_input(feature)
+
+                        if any(
+                            word in feature.lower()
+                            for word in categorical_words
+                        ):
+
+                            values[feature] = st.text_input(
+                                feature
+                            )
+
                         else:
+
                             values[feature] = st.number_input(
                                 feature,
                                 value=0.0,
@@ -1335,32 +2054,66 @@ elif page == "🚨 Fraud Prediction":
                 )
 
             if submitted:
+
                 try:
-                    input_df = pd.DataFrame([values], columns=features)
+
+                    input_df = pd.DataFrame(
+                        [values],
+                        columns=features
+                    )
 
                     if hasattr(model, "feature_names_in_"):
+
                         input_df = input_df.reindex(
                             columns=model.feature_names_in_
                         )
 
                     if hasattr(model, "predict_proba"):
-                        probability = float(model.predict_proba(input_df)[0][1])
+
+                        probability = float(
+                            model.predict_proba(input_df)[0][1]
+                        )
+
                     else:
-                        st.error("This model does not support predict_proba.")
+
+                        st.error(
+                            "This model does not support predict_proba."
+                        )
+
                         probability = None
 
                     if probability is not None:
+
                         c1, c2 = st.columns(2)
-                        c1.metric("Fraud Probability", f"{probability * 100:.2f}%")
-                        c2.metric("Model Threshold", f"{float(threshold) * 100:.2f}%")
+
+                        c1.metric(
+                            "Fraud Probability",
+                            f"{probability * 100:.2f}%"
+                        )
+
+                        c2.metric(
+                            "Model Threshold",
+                            f"{float(threshold) * 100:.2f}%"
+                        )
 
                         if probability >= float(threshold):
-                            st.error("🚨 FRAUD TRANSACTION DETECTED!")
+
+                            st.error(
+                                "🚨 FRAUD TRANSACTION DETECTED!"
+                            )
+
                         else:
-                            st.success("✅ NORMAL TRANSACTION")
+
+                            st.success(
+                                "✅ NORMAL TRANSACTION"
+                            )
 
                 except Exception as error:
-                    st.error(f"Prediction error: {error}")
+
+                    st.error(
+                        f"Prediction error: {error}"
+                    )
+
                     st.info(
                         "Check input data types and encoding against "
                         "the original model training pipeline."
@@ -1368,28 +2121,44 @@ elif page == "🚨 Fraud Prediction":
 
 
 # =========================================================
-# 14. FRAUD ANALYTICS
+# 15. FRAUD ANALYTICS
 # =========================================================
 
 elif page == "📊 Fraud Analytics":
 
     st.title("📊 Fraud Analytics")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
         target = target_column(df)
         amount = amount_column(df)
 
         if target:
+
             fraud_records = df[fraud_mask(df)]
 
             c1, c2, c3 = st.columns(3)
-            c1.metric("Fraud Transactions", len(fraud_records))
-            c2.metric("Normal Transactions", normal_count(df))
-            c3.metric("Fraud Percentage", f"{fraud_rate(df):.2f}%")
+
+            c1.metric(
+                "Fraud Transactions",
+                len(fraud_records)
+            )
+
+            c2.metric(
+                "Normal Transactions",
+                normal_count(df)
+            )
+
+            c3.metric(
+                "Fraud Percentage",
+                f"{fraud_rate(df):.2f}%"
+            )
 
             if amount:
+
                 fig = px.box(
                     df,
                     x=target,
@@ -1397,6 +2166,7 @@ elif page == "📊 Fraud Analytics":
                     color=target,
                     title="Transaction Amount by Fraud Class"
                 )
+
                 show_chart(fig)
 
                 fig = px.violin(
@@ -1407,12 +2177,16 @@ elif page == "📊 Fraud Analytics":
                     box=True,
                     title="Fraud vs Normal Amount Distribution"
                 )
+
                 show_chart(fig)
 
             if "Location" in df.columns:
+
                 location_data = (
-                    fraud_records["Location"].astype(str)
-                    .value_counts().head(15)
+                    fraud_records["Location"]
+                    .astype(str)
+                    .value_counts()
+                    .head(15)
                     .rename_axis("Location")
                     .reset_index(name="Fraud Count")
                 )
@@ -1425,101 +2199,164 @@ elif page == "📊 Fraud Analytics":
                     title="Fraud by Location",
                     color_continuous_scale="Reds"
                 )
+
                 show_chart(fig)
 
-            report_download_button(df, selected, "Fraud Analytics Report")
+            report_download_button(
+                df,
+                selected,
+                "Fraud Analytics Report"
+            )
+
         else:
-            st.warning("Fraud target column not found.")
+            st.warning(
+                "Fraud target column not found."
+            )
 
 
 # =========================================================
-# 15. DETAILED INVESTIGATION
+# 16. DETAILED INVESTIGATION
 # =========================================================
 
 elif page == "🔎 Detailed Investigation":
 
     st.title("🔎 Detailed Investigation")
+
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
         target = target_column(df)
         amount = amount_column(df)
 
         search_columns = [
             c for c in [
-                "TransactionID", "Transaction_ID",
-                "Customer_ID", "receipt_id"
-            ] if c in df.columns
+                "TransactionID",
+                "Transaction_ID",
+                "Customer_ID",
+                "receipt_id"
+            ]
+            if c in df.columns
         ]
 
-        search_options = ["All Columns"] + search_columns
+        search_options = [
+            "All Columns"
+        ] + search_columns
 
-        search_col = st.selectbox("Search By", search_options)
-        search_text = st.text_input("Enter Transaction ID or Customer ID")
+        search_col = st.selectbox(
+            "Search By",
+            search_options
+        )
+
+        search_text = st.text_input(
+            "Enter Transaction ID or Customer ID"
+        )
 
         c1, c2 = st.columns(2)
 
         with c1:
-            fraud_only = st.checkbox("Fraud Only")
+            fraud_only = st.checkbox(
+                "Fraud Only"
+            )
 
         with c2:
-            high_amount = st.checkbox("Amount Greater Than 5000")
+            high_amount = st.checkbox(
+                "Amount Greater Than 5000"
+            )
 
         filtered = df.copy()
 
         if search_text:
+
             if search_col == "All Columns":
+
                 mask = filtered.astype(str).apply(
                     lambda col: col.str.contains(
-                        search_text, case=False, na=False
+                        search_text,
+                        case=False,
+                        na=False
                     )
                 ).any(axis=1)
+
                 filtered = filtered[mask]
+
             else:
+
                 filtered = filtered[
-                    filtered[search_col].astype(str).str.contains(
-                        search_text, case=False, na=False
+                    filtered[search_col]
+                    .astype(str)
+                    .str.contains(
+                        search_text,
+                        case=False,
+                        na=False
                     )
                 ]
 
         if fraud_only and target:
-            filtered = filtered[fraud_mask(filtered)]
+
+            filtered = filtered[
+                fraud_mask(filtered)
+            ]
 
         if high_amount and amount:
+
             filtered = filtered[
-                pd.to_numeric(filtered[amount], errors="coerce") > 5000
+                pd.to_numeric(
+                    filtered[amount],
+                    errors="coerce"
+                ) > 5000
             ]
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("Matching Records", len(filtered))
+
+        c1.metric(
+            "Matching Records",
+            len(filtered)
+        )
 
         if target:
-            c2.metric("Fraud Records", fraud_count(filtered))
+
+            c2.metric(
+                "Fraud Records",
+                fraud_count(filtered)
+            )
 
         if amount:
+
             total_amount = pd.to_numeric(
-                filtered[amount], errors="coerce"
+                filtered[amount],
+                errors="coerce"
             ).sum()
-            c3.metric("Total Amount", f"{total_amount:,.2f}")
+
+            c3.metric(
+                "Total Amount",
+                f"{total_amount:,.2f}"
+            )
 
         st.subheader("Investigation Results")
+
         show_table(filtered)
 
         st.download_button(
             "⬇️ Download Investigation Results",
-            data=filtered.to_csv(index=False).encode("utf-8"),
+            data=filtered.to_csv(
+                index=False
+            ).encode("utf-8"),
             file_name="fraudshield_investigation.csv",
-            mime="text/csv"
+            mime="text/csv",
+            key="investigation_csv"
         )
 
         report_download_button(
-            filtered, selected, "Investigation Report"
+            filtered,
+            selected,
+            "Investigation Report"
         )
 
 
 # =========================================================
-# 16. EXPLAINABLE AI
+# 17. EXPLAINABLE AI
 # =========================================================
 
 elif page == "🧠 Explainable AI":
@@ -1531,25 +2368,37 @@ elif page == "🧠 Explainable AI":
         list(MODEL_FILES.keys())
     )
 
-    saved = load_model_file(MODEL_FILES[selected])
+    saved = load_model_file(
+        MODEL_FILES[selected]
+    )
 
     if saved is None:
+
         st.warning("Model file not found.")
+
     else:
+
         model = get_model(saved)
         features = get_features(saved, model)
 
         if hasattr(model, "feature_importances_"):
+
             importance = model.feature_importances_
 
             if len(features) == len(importance):
+
                 importance_df = pd.DataFrame({
                     "Feature": features,
                     "Importance": importance
-                }).sort_values("Importance", ascending=False)
+                }).sort_values(
+                    "Importance",
+                    ascending=False
+                )
 
                 fig = px.bar(
-                    importance_df.head(20).sort_values("Importance"),
+                    importance_df.head(20).sort_values(
+                        "Importance"
+                    ),
                     x="Importance",
                     y="Feature",
                     orientation="h",
@@ -1557,6 +2406,7 @@ elif page == "🧠 Explainable AI":
                     color="Importance",
                     color_continuous_scale="Blues"
                 )
+
                 show_chart(fig, 600)
 
                 st.dataframe(
@@ -1567,18 +2417,29 @@ elif page == "🧠 Explainable AI":
 
                 st.download_button(
                     "⬇️ Download Feature Importance",
-                    data=importance_df.to_csv(index=False).encode("utf-8"),
+                    data=importance_df.to_csv(
+                        index=False
+                    ).encode("utf-8"),
                     file_name="feature_importance.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    key="feature_importance_csv"
                 )
+
             else:
-                st.warning("Feature names do not match importance values.")
+
+                st.warning(
+                    "Feature names do not match importance values."
+                )
+
         else:
-            st.info("Feature importance is not directly available for this model.")
+
+            st.info(
+                "Feature importance is not directly available for this model."
+            )
 
 
 # =========================================================
-# 17. REAL-TIME MONITORING
+# 18. REAL-TIME MONITORING
 # =========================================================
 
 elif page == "📡 Real-Time Monitoring":
@@ -1593,40 +2454,74 @@ elif page == "📡 Real-Time Monitoring":
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
         target = target_column(df)
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("Total Transactions", f"{len(df):,}")
+
+        c1.metric(
+            "Total Transactions",
+            f"{len(df):,}"
+        )
 
         if target:
-            c2.metric("Fraud Transactions", fraud_count(df))
-            c3.metric("Normal Transactions", normal_count(df))
+
+            c2.metric(
+                "Fraud Transactions",
+                fraud_count(df)
+            )
+
+            c3.metric(
+                "Normal Transactions",
+                normal_count(df)
+            )
 
             fig = px.pie(
                 names=["Normal", "Fraud"],
-                values=[normal_count(df), fraud_count(df)],
+                values=[
+                    normal_count(df),
+                    fraud_count(df)
+                ],
                 hole=0.5,
                 title="Transaction Status",
-                color_discrete_sequence=["#16a085", "#e74c3c"]
+                color_discrete_sequence=[
+                    "#16a085",
+                    "#e74c3c"
+                ]
             )
+
             show_chart(fig)
 
         date = date_column(df)
 
         if date:
+
             monitoring = df.copy()
+
             monitoring[date] = pd.to_datetime(
-                monitoring[date], errors="coerce"
+                monitoring[date],
+                errors="coerce"
             )
-            monitoring = monitoring.dropna(subset=[date])
+
+            monitoring = monitoring.dropna(
+                subset=[date]
+            )
 
             if not monitoring.empty:
-                daily = monitoring.groupby(
-                    monitoring[date].dt.date
-                ).size().reset_index(name="Transactions")
 
-                daily.columns = ["Date", "Transactions"]
+                daily = (
+                    monitoring.groupby(
+                        monitoring[date].dt.date
+                    )
+                    .size()
+                    .reset_index(name="Transactions")
+                )
+
+                daily.columns = [
+                    "Date",
+                    "Transactions"
+                ]
 
                 fig = px.area(
                     daily,
@@ -1634,14 +2529,16 @@ elif page == "📡 Real-Time Monitoring":
                     y="Transactions",
                     title="Daily Transaction Volume"
                 )
+
                 show_chart(fig)
 
         st.subheader("Latest Available Records")
+
         show_table(df.tail(50))
 
 
 # =========================================================
-# 18. FRAUD FORECASTING
+# 19. FRAUD FORECASTING
 # =========================================================
 
 elif page == "🔮 Fraud Forecasting":
@@ -1656,21 +2553,30 @@ elif page == "🔮 Fraud Forecasting":
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
+
         date = date_column(df)
         target = target_column(df)
 
         if date and target:
+
             trend_df = df[[date, target]].copy()
+
             trend_df[date] = pd.to_datetime(
-                trend_df[date], errors="coerce"
+                trend_df[date],
+                errors="coerce"
             )
+
             trend_df[target] = pd.to_numeric(
-                trend_df[target], errors="coerce"
+                trend_df[target],
+                errors="coerce"
             )
+
             trend_df = trend_df.dropna()
 
             if not trend_df.empty:
+
                 trend = (
                     trend_df.set_index(date)
                     .resample("D")[target]
@@ -1685,6 +2591,7 @@ elif page == "🔮 Fraud Forecasting":
                     markers=True,
                     title="Historical Daily Fraud Transactions"
                 )
+
                 show_chart(fig)
 
                 st.dataframe(
@@ -1695,18 +2602,29 @@ elif page == "🔮 Fraud Forecasting":
 
                 st.download_button(
                     "⬇️ Download Historical Trend",
-                    data=trend.to_csv(index=False).encode("utf-8"),
+                    data=trend.to_csv(
+                        index=False
+                    ).encode("utf-8"),
                     file_name="fraud_historical_trend.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    key="historical_trend_csv"
                 )
+
             else:
-                st.warning("No valid date records found.")
+
+                st.warning(
+                    "No valid date records found."
+                )
+
         else:
-            st.warning("Date column or fraud target column not found.")
+
+            st.warning(
+                "Date column or fraud target column not found."
+            )
 
 
 # =========================================================
-# 19. GRAPH ANALYTICS
+# 20. GRAPH ANALYTICS
 # =========================================================
 
 elif page == "🔗 Graph Analytics":
@@ -1721,25 +2639,33 @@ elif page == "🔗 Graph Analytics":
     selected = dataset_selector()
 
     if selected:
+
         df = datasets[selected]
 
         relationship_columns = [
             c for c in [
-                "Customer_ID", "Merchant_Category",
-                "Payment_Method", "Device_Type",
-                "Location", "MerchantID"
-            ] if c in df.columns
+                "Customer_ID",
+                "Merchant_Category",
+                "Payment_Method",
+                "Device_Type",
+                "Location",
+                "MerchantID"
+            ]
+            if c in df.columns
         ]
 
         if relationship_columns:
+
             selected_col = st.selectbox(
                 "Select Relationship Feature",
                 relationship_columns
             )
 
             counts = (
-                df[selected_col].astype(str)
-                .value_counts().head(20)
+                df[selected_col]
+                .astype(str)
+                .value_counts()
+                .head(20)
                 .rename_axis(selected_col)
                 .reset_index(name="Transaction Count")
             )
@@ -1752,14 +2678,18 @@ elif page == "🔗 Graph Analytics":
                 title=f"Transaction Relationships by {selected_col}",
                 color_continuous_scale="Teal"
             )
+
             show_chart(fig)
 
             target = target_column(df)
 
             if target:
+
                 fraud_counts = (
-                    df[fraud_mask(df)][selected_col].astype(str)
-                    .value_counts().head(20)
+                    df[fraud_mask(df)][selected_col]
+                    .astype(str)
+                    .value_counts()
+                    .head(20)
                     .rename_axis(selected_col)
                     .reset_index(name="Fraud Count")
                 )
@@ -1772,6 +2702,7 @@ elif page == "🔗 Graph Analytics":
                     title=f"Fraud Relationships by {selected_col}",
                     color_continuous_scale="Reds"
                 )
+
                 show_chart(fig)
 
             st.dataframe(
@@ -1779,12 +2710,16 @@ elif page == "🔗 Graph Analytics":
                 use_container_width=True,
                 hide_index=True
             )
+
         else:
-            st.warning("No supported relationship columns found.")
+
+            st.warning(
+                "No supported relationship columns found."
+            )
 
 
 # =========================================================
-# 20. DATA UPLOAD & REPORTS
+# 21. DATA UPLOAD & REPORTS
 # =========================================================
 
 elif page == "📤 Data Upload & Reports":
@@ -1804,18 +2739,33 @@ elif page == "📤 Data Upload & Reports":
     )
 
     if uploaded_file is not None:
+
         try:
+
             uploaded_df = pd.read_csv(uploaded_file)
 
-            st.success("Dataset uploaded successfully!")
+            st.success(
+                "Dataset uploaded successfully!"
+            )
 
             st.write("Dataset Preview")
+
             show_table(uploaded_df)
 
             st.write("Dataset Information")
+
             c1, c2, c3 = st.columns(3)
-            c1.metric("Rows", f"{len(uploaded_df):,}")
-            c2.metric("Columns", uploaded_df.shape[1])
+
+            c1.metric(
+                "Rows",
+                f"{len(uploaded_df):,}"
+            )
+
+            c2.metric(
+                "Columns",
+                uploaded_df.shape[1]
+            )
+
             c3.metric(
                 "Missing Values",
                 int(uploaded_df.isnull().sum().sum())
@@ -1823,26 +2773,52 @@ elif page == "📤 Data Upload & Reports":
 
             dataset_name = uploaded_file.name
 
-            if st.button("➕ Add Dataset to Dashboard"):
-                st.session_state.uploaded_datasets[dataset_name] = uploaded_df
+            if st.button(
+                "➕ Add Dataset to Dashboard"
+            ):
+
+                st.session_state.uploaded_datasets[
+                    dataset_name
+                ] = uploaded_df
+
                 st.success(
-                    "Dataset added. It is now available in the dashboard selectors."
+                    "Dataset added. It is now available in dashboard selectors."
                 )
+
                 st.rerun()
 
         except Exception as error:
-            st.error(f"Could not read uploaded CSV: {error}")
+
+            st.error(
+                f"Could not read uploaded CSV: {error}"
+            )
 
     st.divider()
+
     st.subheader("📚 Available Datasets")
 
     if datasets:
+
         for name, df in datasets.items():
+
             with st.expander(name):
+
                 c1, c2, c3 = st.columns(3)
-                c1.metric("Rows", f"{len(df):,}")
-                c2.metric("Columns", df.shape[1])
-                c3.metric("Fraud Cases", fraud_count(df))
+
+                c1.metric(
+                    "Rows",
+                    f"{len(df):,}"
+                )
+
+                c2.metric(
+                    "Columns",
+                    df.shape[1]
+                )
+
+                c3.metric(
+                    "Fraud Cases",
+                    fraud_count(df)
+                )
 
                 st.dataframe(
                     df.head(20),
@@ -1851,25 +2827,43 @@ elif page == "📤 Data Upload & Reports":
                 )
 
                 report_download_button(
-                    df, name, f"{name} Report"
+                    df,
+                    name,
+                    f"{name} Report"
                 )
+
+                safe_csv_name = re.sub(
+                    r"[^a-zA-Z0-9]+",
+                    "_",
+                    name
+                ).strip("_")
 
                 st.download_button(
                     "⬇️ Download CSV",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name=f"{name.replace(' ', '_')}.csv",
+                    data=df.to_csv(
+                        index=False
+                    ).encode("utf-8"),
+                    file_name=f"{safe_csv_name}.csv",
                     mime="text/csv",
-                    key=f"download_{name}"
+                    key=f"download_{safe_csv_name}"
                 )
+
     else:
-        st.warning("No datasets are currently available.")
+
+        st.warning(
+            "No datasets are currently available."
+        )
 
     st.divider()
+
     st.subheader("📄 Full Dataset Report")
 
-    selected = dataset_selector("report_dataset_selector")
+    selected = dataset_selector(
+        "report_dataset_selector"
+    )
 
     if selected:
+
         report_download_button(
             datasets[selected],
             selected,
@@ -1878,13 +2872,17 @@ elif page == "📤 Data Upload & Reports":
 
 
 # =========================================================
-# 21. FOOTER
+# 22. FOOTER
 # =========================================================
 
 st.markdown("""
 <div class="footer">
+
     🛡️ <b>FraudShield AI</b><br>
+
     Enterprise Fraud Detection & Risk Intelligence Platform<br>
+
     Built with Python • Machine Learning • Streamlit
+
 </div>
 """, unsafe_allow_html=True)
