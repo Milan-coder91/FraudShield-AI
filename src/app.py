@@ -2278,6 +2278,452 @@ elif page == "📤 Data Upload & Reports":
 
 
 # =========================================================
+# 21. GLOBAL KPI ANALYTICS + OFFLINE AI CHATBOT
+# =========================================================
+
+st.divider()
+st.header("📊 FraudShield Global Intelligence Center")
+
+if datasets:
+
+    global_dataset = st.selectbox(
+        "Choose Dataset for Global Analytics",
+        list(datasets.keys()),
+        key="global_analytics_dataset"
+    )
+
+    global_df = datasets[global_dataset].copy()
+
+    global_target = target_column(global_df)
+    global_amount = amount_column(global_df)
+    global_date = date_column(global_df)
+
+    total_records = len(global_df)
+    total_fraud_cases = fraud_count(global_df)
+    total_normal_cases = normal_count(global_df)
+    total_missing = int(global_df.isnull().sum().sum())
+    total_duplicates = int(global_df.duplicated().sum())
+
+    fraud_percentage = fraud_rate(global_df)
+
+    amount_values = pd.to_numeric(
+        global_df[global_amount],
+        errors="coerce"
+    ).dropna() if global_amount else pd.Series(dtype=float)
+
+    total_transaction_amount = (
+        amount_values.sum() if not amount_values.empty else 0
+    )
+
+    average_transaction_amount = (
+        amount_values.mean() if not amount_values.empty else 0
+    )
+
+    # GLOBAL KPI CARDS
+
+    st.subheader("📌 Key Performance Indicators")
+
+    k1, k2, k3, k4 = st.columns(4)
+
+    k1.metric("📄 Total Transactions", f"{total_records:,}")
+    k2.metric("🚨 Fraud Cases", f"{total_fraud_cases:,}")
+    k3.metric("⚠️ Fraud Rate", f"{fraud_percentage:.2f}%")
+    k4.metric("✅ Normal Transactions", f"{total_normal_cases:,}")
+
+    k5, k6, k7, k8 = st.columns(4)
+
+    k5.metric("💰 Total Amount", f"{total_transaction_amount:,.2f}")
+    k6.metric("💳 Average Amount", f"{average_transaction_amount:,.2f}")
+    k7.metric("❓ Missing Values", f"{total_missing:,}")
+    k8.metric("🔁 Duplicate Rows", f"{total_duplicates:,}")
+
+    # GLOBAL CHARTS
+
+    st.subheader("📈 Advanced Dataset Visualizations")
+
+    chart_left, chart_right = st.columns(2)
+
+    with chart_left:
+
+        if global_target:
+
+            status_data = pd.DataFrame({
+                "Status": ["Normal", "Fraud"],
+                "Count": [
+                    total_normal_cases,
+                    total_fraud_cases
+                ]
+            })
+
+            fig = px.pie(
+                status_data,
+                names="Status",
+                values="Count",
+                hole=0.6,
+                title="Fraud vs Normal Distribution",
+                color="Status",
+                color_discrete_map={
+                    "Normal": "#16a085",
+                    "Fraud": "#e74c3c"
+                }
+            )
+
+            show_chart(fig)
+
+        else:
+            st.info("Fraud target column not available.")
+
+    with chart_right:
+
+        if not amount_values.empty:
+
+            fig = px.histogram(
+                x=amount_values,
+                nbins=50,
+                title="Transaction Amount Distribution",
+                marginal="box"
+            )
+
+            show_chart(fig)
+
+        else:
+            st.info("Amount column not available.")
+
+    if global_target and global_amount:
+
+        fraud_amount_data = global_df.copy()
+
+        fraud_amount_data["_FraudStatus"] = np.where(
+            fraud_mask(fraud_amount_data),
+            "Fraud",
+            "Normal"
+        )
+
+        fraud_amount_data["_Amount"] = pd.to_numeric(
+            fraud_amount_data[global_amount],
+            errors="coerce"
+        )
+
+        fraud_amount_data = fraud_amount_data.dropna(
+            subset=["_Amount"]
+        )
+
+        if not fraud_amount_data.empty:
+
+            fig = px.box(
+                fraud_amount_data,
+                x="_FraudStatus",
+                y="_Amount",
+                color="_FraudStatus",
+                title="Fraud vs Normal Amount Comparison"
+            )
+
+            show_chart(fig)
+
+    # DATE ANALYSIS
+
+    if global_date:
+
+        date_data = global_df.copy()
+
+        date_data[global_date] = pd.to_datetime(
+            date_data[global_date],
+            errors="coerce"
+        )
+
+        date_data = date_data.dropna(
+            subset=[global_date]
+        )
+
+        if not date_data.empty:
+
+            date_data["_Date"] = date_data[global_date].dt.date
+
+            daily_data = (
+                date_data.groupby("_Date")
+                .size()
+                .reset_index(name="Transactions")
+            )
+
+            fig = px.area(
+                daily_data,
+                x="_Date",
+                y="Transactions",
+                title="Daily Transaction Volume"
+            )
+
+            show_chart(fig)
+
+            if global_target:
+
+                date_data["_FraudFlag"] = (
+                    fraud_mask(date_data).astype(int)
+                )
+
+                daily_fraud = (
+                    date_data.groupby("_Date")["_FraudFlag"]
+                    .sum()
+                    .reset_index(name="Fraud Cases")
+                )
+
+                fig = px.line(
+                    daily_fraud,
+                    x="_Date",
+                    y="Fraud Cases",
+                    markers=True,
+                    title="Daily Fraud Trend"
+                )
+
+                show_chart(fig)
+
+    # CATEGORY ANALYSIS
+
+    category_columns = [
+        col for col in [
+            "Merchant_Category",
+            "TransactionType",
+            "Payment_Method",
+            "Device_Type",
+            "Location",
+            "channel",
+            "Channel"
+        ]
+        if col in global_df.columns
+    ]
+
+    if category_columns:
+
+        selected_category = st.selectbox(
+            "Select Category for Analysis",
+            category_columns,
+            key="global_category_analysis"
+        )
+
+        category_counts = (
+            global_df[selected_category]
+            .astype(str)
+            .value_counts()
+            .head(15)
+            .rename_axis(selected_category)
+            .reset_index(name="Transactions")
+        )
+
+        fig = px.bar(
+            category_counts,
+            x=selected_category,
+            y="Transactions",
+            color="Transactions",
+            title=f"Transactions by {selected_category}",
+            color_continuous_scale="Blues"
+        )
+
+        show_chart(fig)
+
+    st.divider()
+
+    # =====================================================
+    # OFFLINE FRAUDSHIELD AI CHAT ASSISTANT
+    # =====================================================
+
+    st.header("🤖 FraudShield AI Chat Assistant")
+
+    st.caption(
+        "Ask questions about your selected dataset. "
+        "This is an offline, rule-based assistant; no API key is required."
+    )
+
+    if "fraudshield_chat_history" not in st.session_state:
+        st.session_state.fraudshield_chat_history = []
+
+    # Show chat history
+
+    for message in st.session_state.fraudshield_chat_history:
+
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Chat input
+
+    user_question = st.chat_input(
+        "Ask about fraud, transactions, amount, dataset..."
+    )
+
+    if user_question:
+
+        st.session_state.fraudshield_chat_history.append({
+            "role": "user",
+            "content": user_question
+        })
+
+        question = user_question.lower()
+
+        # Dataset-based answer generation
+
+        if any(word in question for word in [
+            "total", "transactions", "records", "rows"
+        ]):
+
+            answer = (
+                f"📄 **Total Transactions:** {total_records:,}\n\n"
+                f"Dataset: {global_dataset}"
+            )
+
+        elif any(word in question for word in [
+            "fraud rate", "percentage", "fraud percentage"
+        ]):
+
+            answer = (
+                f"⚠️ **Fraud Rate:** {fraud_percentage:.2f}%\n\n"
+                f"Fraud Cases: {total_fraud_cases:,}\n\n"
+                f"Normal Cases: {total_normal_cases:,}"
+            )
+
+        elif "fraud" in question:
+
+            if global_target:
+
+                answer = (
+                    f"🚨 **Fraud Analysis**\n\n"
+                    f"- Fraud Cases: {total_fraud_cases:,}\n"
+                    f"- Normal Cases: {total_normal_cases:,}\n"
+                    f"- Fraud Rate: {fraud_percentage:.2f}%"
+                )
+
+            else:
+
+                answer = (
+                    "Is dataset mein recognized fraud target column "
+                    "nahi mila. Fraud analysis ke liye IsFraud, "
+                    "Fraudulent, is_fraud, fraud ya Class column chahiye."
+                )
+
+        elif any(word in question for word in [
+            "normal", "genuine", "legitimate"
+        ]):
+
+            answer = (
+                f"✅ **Normal Transactions:** {total_normal_cases:,}"
+            )
+
+        elif any(word in question for word in [
+            "amount", "money", "value", "average", "total value"
+        ]):
+
+            if not amount_values.empty:
+
+                answer = (
+                    f"💰 **Transaction Amount Analysis**\n\n"
+                    f"- Total Amount: {total_transaction_amount:,.2f}\n"
+                    f"- Average Amount: {average_transaction_amount:,.2f}\n"
+                    f"- Median Amount: {amount_values.median():,.2f}\n"
+                    f"- Maximum Amount: {amount_values.max():,.2f}\n"
+                    f"- Minimum Amount: {amount_values.min():,.2f}"
+                )
+
+            else:
+
+                answer = "Amount column dataset mein available nahi hai."
+
+        elif any(word in question for word in [
+            "missing", "null", "nan", "empty"
+        ]):
+
+            answer = (
+                f"❓ **Missing Values:** {total_missing:,}\n\n"
+                f"Dataset mein {global_df.shape[1]} columns hain."
+            )
+
+        elif any(word in question for word in [
+            "duplicate", "duplicates"
+        ]):
+
+            answer = (
+                f"🔁 **Duplicate Rows:** {total_duplicates:,}"
+            )
+
+        elif any(word in question for word in [
+            "column", "features", "fields"
+        ]):
+
+            answer = (
+                f"📊 **Dataset Columns ({len(global_df.columns)}):**\n\n"
+                + "\n".join(
+                    [f"- {col}" for col in global_df.columns]
+                )
+            )
+
+        elif any(word in question for word in [
+            "dataset", "data information", "overview"
+        ]):
+
+            answer = (
+                f"📁 **Dataset Overview**\n\n"
+                f"- Name: {global_dataset}\n"
+                f"- Rows: {global_df.shape[0]:,}\n"
+                f"- Columns: {global_df.shape[1]}\n"
+                f"- Missing Values: {total_missing:,}\n"
+                f"- Duplicate Rows: {total_duplicates:,}"
+            )
+
+        elif any(word in question for word in [
+            "help", "what can you do", "commands"
+        ]):
+
+            answer = (
+                "🤖 **I can answer these dataset questions:**\n\n"
+                "- Total transactions\n"
+                "- Total fraud cases\n"
+                "- Fraud percentage / fraud rate\n"
+                "- Normal transactions\n"
+                "- Total and average transaction amount\n"
+                "- Missing values\n"
+                "- Duplicate rows\n"
+                "- Dataset columns and overview\n\n"
+                "Example: `What is the fraud rate?`"
+            )
+
+        else:
+
+            answer = (
+                "I can help analyze your selected dataset. "
+                "Try asking: **total transactions**, **fraud cases**, "
+                "**fraud rate**, **average amount**, **missing values**, "
+                "or **show columns**."
+            )
+
+        st.session_state.fraudshield_chat_history.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        st.rerun()
+
+    chat_col1, chat_col2 = st.columns([1, 4])
+
+    with chat_col1:
+
+        if st.button(
+            "🗑️ Clear Chat",
+            key="clear_fraudshield_chat"
+        ):
+
+            st.session_state.fraudshield_chat_history = []
+            st.rerun()
+
+    with chat_col2:
+
+        st.caption(
+            f"Assistant dataset: {global_dataset}"
+        )
+
+else:
+
+    st.info(
+        "Upload a CSV dataset from Data Upload & Reports "
+        "to activate Global Intelligence and Chat Assistant."
+    )
+
+# =========================================================
 # 21. FOOTER
 # =========================================================
 
