@@ -1,9 +1,9 @@
 # 🛡️ FraudShield AI
 
-### AI-Powered Financial Fraud Detection & Transaction Monitoring System
+### AI-Powered Financial Fraud Detection & Transaction Intelligence Platform
 
 <p align="center">
-  A Machine Learning project designed to identify potentially fraudulent financial transactions using Random Forest classification and an interactive Streamlit dashboard.
+  A Machine Learning-powered fraud detection and transaction monitoring platform built using Python, Random Forest, Scikit-learn, and Streamlit.
 </p>
 
 <p align="center">
@@ -20,35 +20,43 @@
 
 ## 📌 Project Overview
 
-**FraudShield AI** is a Machine Learning-based fraud detection system designed to identify potentially fraudulent financial transactions using transaction data.
+**FraudShield AI** is a Machine Learning-based financial fraud detection and transaction intelligence platform designed to identify potentially fraudulent transactions.
 
-The project uses two independent fraud detection datasets and Random Forest classification models to predict whether a transaction is normal or potentially fraudulent.
+The project uses two independent financial fraud detection datasets and trained Random Forest classification models to predict whether a transaction is normal or potentially fraudulent.
 
-It also provides an interactive **Streamlit Dashboard** where users can enter transaction details, view fraud probabilities, and receive real-time predictions.
+It also provides an interactive Streamlit dashboard that allows users to explore transaction data, analyze fraud patterns, generate predictions, monitor fraud-related metrics, and investigate suspicious transactions.
+
+The platform combines Machine Learning, data analytics, interactive visualizations, and an offline rule-based chat assistant in one application.
 
 ## 🎯 Project Objectives
 
 - Detect potentially fraudulent financial transactions.
 - Analyze transaction patterns and fraud distribution.
-- Perform data preprocessing and feature engineering.
-- Train and evaluate Machine Learning models.
+- Perform data cleaning and preprocessing.
+- Apply feature engineering techniques.
+- Train and evaluate Random Forest classification models.
 - Handle imbalanced datasets using SMOTE.
-- Optimize classification thresholds.
-- Develop an interactive fraud detection dashboard.
+- Optimize classification decision thresholds.
+- Compare different model performances.
+- Build an interactive fraud detection dashboard.
+- Provide transaction-level fraud predictions and analytics.
+- Support fraud investigation through interactive visualizations.
 
 ## 🛠️ Technologies & Tools
 
 | Technology | Purpose |
 |---|---|
 | Python | Programming language |
-| Pandas | Data manipulation |
+| Pandas | Data manipulation and analysis |
 | NumPy | Numerical operations |
 | Matplotlib | Data visualization |
 | Seaborn | Statistical visualization |
+| Plotly | Interactive charts |
 | Scikit-learn | Machine Learning |
-| Imbalanced-learn | SMOTE |
+| Imbalanced-learn | SMOTE and class imbalance handling |
 | Joblib | Model serialization |
-| Streamlit | Interactive dashboard |
+| Streamlit | Interactive web application |
+| ReportLab | PDF report generation |
 | Git & GitHub | Version control |
 
 ## 📂 Project Structure
@@ -93,48 +101,59 @@ FraudShield_AI/
 
 ## 📊 Datasets
 
-The project uses two independent datasets.
+The project uses two independent fraud detection datasets.
 
 ### 1. Credit Card Fraud Dataset
 
-- Total transactions: 100,000
-- Original columns: 7
-- Normal transactions: 99,000
-- Fraudulent transactions: 1,000
-- Fraud rate: 1%
+| Dataset Information | Value |
+|---|---:|
+| Total Transactions | 100,000 |
+| Original Columns | 7 |
+| Normal Transactions | 99,000 |
+| Fraudulent Transactions | 1,000 |
+| Fraud Rate | 1% |
 
 ### 2. Fraud Detection Dataset
 
-- Total transactions: 5,000
-- Original columns: 14
-- Normal transactions: 4,518
-- Fraudulent transactions: 482
-- Fraud rate: 9.64%
+| Dataset Information | Value |
+|---|---:|
+| Total Transactions | 5,000 |
+| Original Columns | 14 |
+| Normal Transactions | 4,518 |
+| Fraudulent Transactions | 482 |
+| Fraud Rate | 9.64% |
 
-## ⚙️ Project Workflow
+Both datasets are analyzed and processed independently, with separate trained models used for their respective prediction workflows.
+
+## ⚙️ Machine Learning Workflow
+
+The project follows a structured Machine Learning pipeline:
 
 1. Dataset Loading and Inspection
 2. Exploratory Data Analysis (EDA)
 3. Data Cleaning and Preprocessing
-4. Feature Engineering
-5. Random Forest Model Training
-6. SMOTE-Based Model Training
-7. Threshold Tuning
-8. Model Comparison
-9. Final Model Evaluation
-10. Results Visualization
-11. Streamlit Dashboard Development
+4. Missing Value and Duplicate Analysis
+5. Feature Engineering
+6. Random Forest Model Training
+7. SMOTE-Based Model Training
+8. Decision Threshold Tuning
+9. Model Comparison
+10. Final Model Evaluation
+11. Results Visualization
+12. Model Serialization
+13. Streamlit Dashboard Integration
+14. Interactive Fraud Prediction
 
 ## 🤖 Machine Learning Models
 
-The project explores:
+The project explores the following approaches:
 
-- Random Forest Classifier
-- SMOTE-based Random Forest training
-- Pipeline-based preprocessing and classification
-- Validation-based decision threshold selection
+- **Random Forest Classifier:** Classification of normal and potentially fraudulent transactions.
+- **SMOTE-Based Random Forest:** Training with oversampling to address class imbalance.
+- **Pipeline-Based Models:** Combining preprocessing and classification steps.
+- **Threshold Optimization:** Selecting decision thresholds to balance fraud detection and false positives.
 
-The final dashboard uses the saved Pipeline-based Random Forest models.
+The dashboard uses saved Pipeline-based Random Forest models for transaction prediction.
 
 ## 📈 Final Model Performance
 
@@ -149,29 +168,145 @@ The following results were obtained from the final test evaluation.
 
 ### Performance Observations
 
-- **Credit Card Fraud:** The model detects 69% of fraudulent transactions, but its precision is low and it produces a high number of false positives.
-- **Fraud Detection:** The model achieves 83.60% accuracy and 68.75% fraud recall on the test dataset.
+**Credit Card Fraud Dataset**
+- The model identifies 69% of fraudulent transactions in the test set.
+- Precision is very low at 1.01%, indicating a high number of false-positive predictions.
+- Further model improvement and threshold optimization are required.
 
-**Note:** The Credit Card Fraud model requires further improvement before practical deployment. Model predictions are not guaranteed to be correct.
+**Fraud Detection Dataset**
+- The model achieves 83.60% accuracy.
+- Fraud recall is 68.75%.
+- Precision is 33%, indicating scope for reducing false-positive predictions.
+
+**Important:** Accuracy alone is not sufficient for evaluating fraud detection models, particularly when datasets are imbalanced. Precision, recall, F1-score, and the confusion matrix are also important.
 
 ## 🖥️ Streamlit Dashboard Features
 
-FraudShield AI provides an interactive dashboard with:
+FraudShield AI includes an interactive dashboard with multiple sections for transaction analysis, fraud detection, and investigation.
 
-- Selection between two fraud detection datasets.
+### 📊 1. Executive Dashboard
+- Overall transaction statistics.
+- Fraud and normal transaction KPIs.
+- Fraud rate and transaction amount insights.
+- Interactive visual summaries.
+
+### 📁 2. Dataset Overview
+- Dataset selection.
+- Dataset dimensions and column information.
+- Data type and missing value inspection.
+- Dataset preview.
+
+### 📈 3. EDA Dashboard
+- Fraud distribution analysis.
+- Transaction amount analysis.
+- Interactive charts and visualizations.
+- Transaction pattern exploration.
+
+### ⚙️ 4. Feature Engineering
+- Feature inspection.
+- Numerical and categorical feature analysis.
+- Prepared feature information for model workflows.
+
+### 🕵️ 5. Fraud Intelligence
+- Fraud pattern exploration.
+- Suspicious transaction analysis.
+- Fraud-related insights.
+
+### 🤖 6. Model Comparison
+- Model performance comparison.
+- Accuracy, precision, recall, and F1-score analysis.
+- Evaluation results visualization.
+
+### 🚨 7. Fraud Prediction
 - Transaction information input.
 - Fraud probability calculation.
 - Model decision threshold display.
 - FRAUD or NORMAL prediction.
-- Separate trained models for each dataset.
 
-### 🚀 Try the Live Application
+### 📊 8. Fraud Analytics
+- Fraud distribution analysis.
+- Transaction analytics.
+- Interactive fraud charts.
 
-Access the deployed dashboard here:
+### 🔎 9. Detailed Investigation
+- Transaction-level investigation.
+- Suspicious transaction exploration.
+- Detailed dataset filtering.
+
+### 🧠 10. Explainable AI
+- Model prediction interpretation.
+- Feature-related insights where supported by the selected model.
+
+### 📡 11. Real-Time Monitoring
+- Interactive transaction monitoring interface.
+- Fraud-related monitoring metrics.
+
+### 🔮 12. Fraud Forecasting
+- Fraud and transaction trend exploration.
+- Forecast-related visual analysis.
+
+### 🔗 13. Graph Analytics
+- Relationship and network-based fraud exploration.
+
+### 📤 14. Data Upload & Reports
+- Dataset upload interface.
+- Data analysis and reporting.
+- Downloadable reports where supported.
+
+### 🏠 15. Home Dashboard
+- Project introduction.
+- Dashboard navigation.
+- Overview of FraudShield AI.
+
+## 💬 FraudShield AI Chat Assistant
+
+The dashboard also includes an **offline, rule-based chat assistant** that helps users explore information about the selected dataset without requiring an external API key.
+
+Users can ask questions such as:
+
+- Show total transactions.
+- How many fraud cases are there?
+- What is the fraud rate?
+- How many normal transactions?
+- What is the average transaction amount?
+- Show missing values.
+- How many duplicate rows?
+- Show dataset columns.
+- Show dataset overview.
+
+The assistant responds using available dataset information and predefined question-handling rules.
+
+**Note:** This is a rule-based dataset assistant, not a generative AI chatbot.
+
+## 📊 Global KPI Cards & Interactive Visualizations
+
+The dashboard provides dataset-level metrics and visual analytics, including:
+
+- Total Transactions
+- Fraud Cases
+- Fraud Rate
+- Normal Transactions
+- Total Transaction Amount
+- Average Transaction Amount
+- Missing Values
+- Duplicate Rows
+
+Interactive visualizations include:
+
+- Fraud vs Normal Distribution
+- Transaction Amount Histogram
+- Transaction Amount Box Plot
+- Daily Transaction Trends
+- Daily Fraud Trends
+- Category-Based Transaction Analysis
+
+## 🚀 Try the Live Application
+
+Explore the deployed FraudShield AI dashboard:
 
 **https://fraudshield-ai-milan.streamlit.app/**
 
-## 🚀 Installation & Setup
+## ⚙️ Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -205,32 +340,37 @@ For Windows:
 pip install -r requirements.txt
 ```
 
-### 6. Run the Dashboard
+### 6. Run the Streamlit Dashboard
 
 ```bash
 streamlit run src/app.py
 ```
 
-The dashboard will open in your browser.
+The application will open in your default web browser.
 
 ## 📁 Generated Outputs
 
-The project generates:
+The project generates or uses the following outputs:
 
-- EDA reports
-- Correlation heatmaps
-- Fraud distribution charts
 - Processed datasets
+- Exploratory Data Analysis reports
+- Correlation heatmaps
+- Fraud distribution visualizations
 - Trained Machine Learning models
+- SMOTE model results
 - Model comparison reports
-- Final evaluation results
-- Final evaluation graphs
+- Final evaluation metrics
+- Evaluation graphs
+- Interactive dashboard analytics
+- Downloadable reports
 
 ## ⚠️ Disclaimer
 
-FraudShield AI is an educational and demonstration project. Its predictions are based on trained Machine Learning models and are not a guarantee of transaction safety.
+FraudShield AI is an educational and demonstration project.
 
-It should not be used as the sole basis for real financial or banking decisions.
+Its predictions are based on trained Machine Learning models and are not guaranteed to be correct. The system may produce false-positive and false-negative predictions.
+
+It should not be used as the sole basis for real financial, banking, or security decisions.
 
 ## 👨‍💻 Author
 
@@ -240,11 +380,12 @@ Data Analysis | Data Science | Machine Learning | Python
 
 ---
 
-⭐ If you find this project interesting, consider giving the repository a star!
+⭐ If you find this project useful or interesting, consider giving the repository a star!
 
 **Project:** FraudShield AI  
-**Category:** Machine Learning & Data Science and Analysis  
-**Application:** Financial Fraud Detection
+**Category:** Machine Learning | Data Science | Financial Analytics  
+**Application:** Financial Fraud Detection & Transaction Monitoring
 
-**GitHub:** https://github.com/Milan-coder91/FraudShield-AI  
+**GitHub:** https://github.com/Milan-coder91/FraudShield-AI
+
 **Live Demo:** https://fraudshield-ai-milan.streamlit.app/
